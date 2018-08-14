@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8'/>
+  <title>Old Castle Fansubs - stats</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
+  <link rel='stylesheet' type='text/css' href='https://bootswatch.com/4/minty/bootstrap.min.css'/>
+
+  <style type='text/css'>
+    :root {
+      --avatar-size: 4.5em;
+      --avatar-pad: 0.75em;
+    }
+
+    .general table {
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .text img {
+      max-width: 100%;
+    }
+    .text blockquote {
+      border-left: 3px solid #DDD;
+      padding-left: 0.5em;
+    }
+
+    .comments li {
+      margin-bottom: 1em;
+      padding: 0.5em 0.5em 0.5em calc(var(--avatar-size) + var(--avatar-pad) + 0.5em);
+      min-height: calc(var(--avatar-size) + 2px);
+    }
+    .comments .avatar {
+      width: var(--avatar-size);
+      height: var(--avatar-size);
+      position: absolute;
+      margin-left: calc(-1 * var(--avatar-size) - var(--avatar-pad));
+    }
+  </style>
+</head>
+<body>
+  <main class='container'>
+    <header class='row justify-content-center'>
+      <div class='col-12 col-lg-8 text-center'>
+        <h1>Old Castle Fansubs - statistics</h1>
+        <p class='text-muted'>Generated at {{ date.strftime('%Y-%m-%d %H:%M') }}</p>
+      </div>
+    </header>
+
+    <section class='row general justify-content-center'>
+      <div class='col-12 col-md-8 col-lg-6'>
+        <h2 class='text-center'>General</h2>
+        <table class='table table-sm'>
+          <thead class='thead-light'>
+            <tr>
+              <th>Subject</th>
+              <th class='text-center'>Total</th>
+              <th class='text-center'>Average</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Downloads</td>
+              <td class='text-center'>{{ torrents.values()|sum(attribute='download_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(torrents.values()|sum(attribute='download_count') / torrents|length) }}</td>
+            </tr>
+            <tr>
+              <td>Seeders</td>
+              <td class='text-center'>{{ torrents.values()|sum(attribute='seeder_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(torrents.values()|sum(attribute='seeder_count') / torrents|length) }}</td>
+            </tr>
+            <tr>
+              <td>Leechers</td>
+              <td class='text-center'>{{ torrents.values()|sum(attribute='leecher_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(torrents.values()|sum(attribute='leecher_count') / torrents|length) }}</td>
+            </tr>
+            <tr>
+              <td>Comments</td>
+              <td class='text-center'>{{ torrents.values()|sum(attribute='comment_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(torrents.values()|sum(attribute='comment_count') / torrents|length) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class='comments row justify-content-center'>
+      <div class='col-12 col-lg-8'>
+        <h2 class='text-center'>Latest comments</h2>
+        <ul class='list-unstyled'>
+          {% for comment in comments|sort(attribute='comment_date', reverse=True) %}
+            <li class='border bg-light'>
+              <img class='avatar border'
+                   src='{{ comment.author_avatar_url }}'
+                   alt='{{ comment.author_name }}'
+              />
+              <strong class='author'>
+                {{ comment.author_name }}
+              </strong>
+              <div class='text mt-1'>
+                {{ comment.text|markdown }}
+              </div>
+              <small class='text-muted'>
+                {{ comment.comment_date.strftime('%Y-%m-%d %H:%M') }}
+                –
+                <a href='https://nyaa.si/view/{{ comment.torrent_id }}'>
+                  {{ torrents[comment.torrent_id].name }}
+                </a>
+              </small>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+import datetime
+import json
+import pickle
+import sys
+import typing as T
+from pathlib import Path
+
+import configargparse
+import jinja2
+import markdown
+import xdg
+from nyaa_si import NyaaSiApi, Torrent, TorrentComment
+
+CACHE_PATH = Path(xdg.XDG_CACHE_HOME) / 'oc-comments.dat'
+ROOT_PATH = Path(__file__).parent
+
+
+def parse_args():
+    parser = configargparse.ArgumentParser(
+        formatter_class=configargparse.RawTextHelpFormatter,
+        default_config_files=[Path(xdg.XDG_CONFIG_HOME) / 'oc-tools.yml']
+    )
+
+    parser.add_argument('--nyaasi-user', required=True)
+    parser.add_argument('--nyaasi-pass', required=False)
+    parser.add_argument('-d', '--dev', action='store_true')
+    parser.add_argument(
+        '-o',
+        '--output',
+        default=Path('stats.html'),
+        type=Path,
+        required=False
+    )
+
+    return parser.parse_known_args()[0]
+
+
+def print_comments(
+        torrents: T.Dict[int, Torrent],
+        comments: T.Dict[int, T.List[TorrentComment]]
+) -> None:
+    for torrent_id, torrent_comments in sorted(
+            comments.items(),
+            key=lambda item: max(
+                comment.comment_date
+                for comment in item[1]
+            )
+    ):
+        torrent = torrents[torrent_id]
+        print('-' * 80)
+        print(torrent.name)
+        print()
+
+        for comment in torrent_comments:
+            print(f'[{comment.comment_date}] {comment.author_name}:')
+            print(comment.text)
+            print()
+
+
+class CustomJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
+        return obj.__dict__
+
+
+def main() -> None:
+    args = parse_args()
+
+    comments: T.Dict[int, T.List[TorrentComment]] = {}
+    if CACHE_PATH.exists():
+        torrents, comments = pickle.loads(CACHE_PATH.read_bytes())
+
+    if not args.dev:
+        print(f'Getting torrent list…', file=sys.stderr)
+
+        api = NyaaSiApi()
+        if args.nyaasi_pass:
+            api.login(args.nyaasi_user, args.nyaasi_pass)
+
+        torrents = {
+            torrent.torrent_id: torrent
+            for torrent in api.list_user_torrents(args.nyaasi_user)
+        }
+
+        for torrent in torrents.values():
+            torrent_comments = len(comments.get(torrent.torrent_id, []))
+            if torrent_comments != torrent.comment_count:
+                print(
+                    f'Getting comments for "{torrent.name}"…', file=sys.stderr
+                )
+                comments[torrent.torrent_id] = list(
+                    api.list_torrent_comments(torrent.torrent_id)
+                )
+
+    CACHE_PATH.write_bytes(pickle.dumps((torrents, comments)))
+
+    print(f'Writing output to {args.output}…', file=sys.stderr)
+
+    md = markdown.Markdown(extensions=['meta'])
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(str(ROOT_PATH / 'data'))
+    )
+    env.filters['markdown'] = lambda text: jinja2.Markup(md.convert(text))
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(
+        env
+        .get_template('report.html')
+        .render(
+            date=datetime.datetime.now(),
+            torrents=torrents,
+            comments=sum(comments.values(), [])
+        )
+    )
+
+
+if __name__ == '__main__':
+    main()
