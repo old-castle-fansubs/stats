@@ -6,6 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import paramiko
+import sshtunnel
+import transmissionrpc
+
+DEDIBOX_HOST = 'oldcastle.moe'
+DEDIBOX_PORT = 22
 
 
 class ApiError(RuntimeError):
@@ -15,6 +20,14 @@ class ApiError(RuntimeError):
 class NotLoggedIn(ApiError):
     def __init__(self) -> None:
         super().__init__('not logged in')
+
+
+@dataclass
+class TorrentStats:
+    active_torrents: int
+    downloaded_bytes: int
+    uploaded_bytes: int
+    uptime: datetime.timedelta
 
 
 @dataclass
@@ -32,8 +45,9 @@ class GuestbookComment:
 
 class DediboxApi:
     def __init__(self) -> None:
-        self.transport = paramiko.Transport(('oldcastle.moe', 22))
+        self.transport = paramiko.Transport((DEDIBOX_HOST, DEDIBOX_PORT))
         self.sftp = None
+        self.transmission = None
 
     def login(self, user_name: str, password: str) -> None:
         self.transport.start_client(event=None, timeout=15)
@@ -44,6 +58,30 @@ class DediboxApi:
             event=None
         )
         self.sftp = paramiko.SFTPClient.from_transport(self.transport)
+
+        self.transmission_tunnel = sshtunnel.SSHTunnelForwarder(
+             (DEDIBOX_HOST, 22),
+             ssh_username=user_name,
+             ssh_password=password,
+             remote_bind_address=('127.0.0.1', 9091)
+        )
+        self.transmission_tunnel.start()
+        self.transmission = transmissionrpc.Client(
+            '127.0.0.1',
+            port=self.transmission_tunnel.local_bind_port
+        )
+
+    def get_torrent_stats(self) -> TorrentStats:
+        if self.transmission is None:
+            raise NotLoggedIn
+
+        stats = self.transmission.session_stats().cumulative_stats
+        return TorrentStats(
+            active_torrents=self.transmission.session_stats().activeTorrentCount,
+            downloaded_bytes=stats['downloadedBytes'],
+            uploaded_bytes=stats['uploadedBytes'],
+            uptime=datetime.timedelta(seconds=stats['secondsActive'])
+        )
 
     def list_guestbook_comments(self) -> T.Iterable[GuestbookComment]:
         if self.sftp is None:
@@ -73,3 +111,5 @@ class DediboxApi:
 
     def __del__(self) -> None:
         self.transport.close()
+        if self.transmission_tunnel is not None:
+            self.transmission_tunnel.close()

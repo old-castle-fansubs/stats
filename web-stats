@@ -42,6 +42,14 @@ class Comment:
     torrent: T.Optional[Torrent]
 
 
+@dataclass
+class Context:
+    dedibox_torrent_stats: dedibox.TorrentStats
+    guestbook_comments: T.List[dedibox.GuestbookComment]
+    nyaa_si_torrents: T.List[nyaa_si.Torrent]
+    nyaa_si_comments: T.List[nyaa_si.TorrentComment]
+
+
 def parse_args() -> configargparse.Namespace:
     parser = configargparse.ArgumentParser(
         formatter_class=configargparse.RawTextHelpFormatter,
@@ -64,21 +72,16 @@ def parse_args() -> configargparse.Namespace:
     return parser.parse_known_args()[0]
 
 
-@dataclass
-class Context:
-    guestbook_comments: T.List[dedibox.GuestbookComment]
-    nyaa_si_torrents: T.List[nyaa_si.Torrent]
-    nyaa_si_comments: T.List[nyaa_si.TorrentComment]
-
-
 def create_context(
         args: configargparse.Namespace,
         cached_context: T.Optional[Context]
 ) -> Context:
-    print('Getting guest book comment list…', file=sys.stderr)
     api = dedibox.DediboxApi()
     api.login(args.dedibox_user, args.dedibox_pass)
+    print('Getting guest book comment list…', file=sys.stderr)
     guestbook_comments = list(api.list_guestbook_comments())
+    print('Getting transmission stats…', file=sys.stderr)
+    dedibox_torrent_stats = api.get_torrent_stats()
 
     print(f'Getting nyaa.si torrent list…', file=sys.stderr)
     api = nyaa_si.NyaaSiApi()
@@ -110,6 +113,7 @@ def create_context(
             )
 
     return Context(
+        dedibox_torrent_stats=dedibox_torrent_stats,
         guestbook_comments=guestbook_comments,
         nyaa_si_torrents=nyaa_si_torrents,
         nyaa_si_comments=nyaa_si_comments,
@@ -169,6 +173,7 @@ def write_report(args: configargparse.Namespace, context: Context) -> None:
         .get_template('report.html')
         .render(
             date=datetime.datetime.now(),
+            dedibox_torrent_stats=context.dedibox_torrent_stats,
             torrents=torrents,
             comments=comments,
         )

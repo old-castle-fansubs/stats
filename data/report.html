@@ -48,9 +48,9 @@
       </div>
     </header>
 
-    <section class='row general justify-content-center'>
-      <div class='col-12 col-md-8 col-lg-6'>
-        <h2 class='text-center'>General</h2>
+    <section class='general row justify-content-center'>
+      <div class='col-12 col-lg-4'>
+        <h2 class='text-center'>Torrents</h2>
         <table class='table table-sm'>
           <thead class='thead-light'>
             <tr>
@@ -80,6 +80,36 @@
               <td class='text-center'>{{ torrents|sum(attribute='comment_count') }}
                 ({{ comments|length }} <sup title='includes guestbook comments that are not tied to any torrent'>[?]</sup>)</td>
               <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='comment_count') / torrents|length) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class='col-12 col-lg-4'>
+        <h2 class='text-center'>Transmission</h2>
+        <table class='table table-sm'>
+          <thead class='thead-light'>
+            <tr>
+              <th>Subject</th>
+              <th class='text-center'>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Uptime</td>
+              <td class='text-center'>{{ dedibox_torrent_stats.uptime }}</td>
+            </tr>
+            <tr>
+              <td>Active torrents</td>
+              <td class='text-center'>{{ dedibox_torrent_stats.active_torrents }}</td>
+            </tr>
+            <tr>
+              <td>Downloaded</td>
+              <td class='text-center'>{{ dedibox_torrent_stats.downloaded_bytes|filesizeformat }}</td>
+            </tr>
+            <tr>
+              <td>Uploaded</td>
+              <td class='text-center'>{{ dedibox_torrent_stats.uploaded_bytes|filesizeformat }}</td>
             </tr>
           </tbody>
         </table>
