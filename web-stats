@@ -1,29 +1,57 @@
 #!/usr/bin/env python3
 import datetime
-import json
 import pickle
 import sys
 import typing as T
+from dataclasses import dataclass
 from pathlib import Path
+
+import dedibox
+import nyaa_si
 
 import configargparse
 import jinja2
 import markdown
 import xdg
-from nyaa_si import NyaaSiApi, Torrent, TorrentComment
 
 CACHE_PATH = Path(xdg.XDG_CACHE_HOME) / 'oc-comments.dat'
 ROOT_PATH = Path(__file__).parent
 
 
-def parse_args():
+@dataclass
+class Torrent:
+    source: str
+    torrent_id: int
+    torrent_link: str
+    name: str
+    size: int
+    upload_date: datetime.datetime
+    seeder_count: int
+    leecher_count: int
+    download_count: int
+    comment_count: int
+
+
+@dataclass
+class Comment:
+    source: str
+    comment_date: datetime.datetime
+    author_name: str
+    author_avatar_url: T.Optional[str]
+    text: str
+    torrent: T.Optional[Torrent]
+
+
+def parse_args() -> configargparse.Namespace:
     parser = configargparse.ArgumentParser(
         formatter_class=configargparse.RawTextHelpFormatter,
         default_config_files=[Path(xdg.XDG_CONFIG_HOME) / 'oc-tools.yml']
     )
 
+    parser.add_argument('--dedibox-user', required=True)
+    parser.add_argument('--dedibox-pass', required=True)
     parser.add_argument('--nyaasi-user', required=True)
-    parser.add_argument('--nyaasi-pass', required=False)
+    parser.add_argument('--nyaasi-pass', required=True)
     parser.add_argument('-d', '--dev', action='store_true')
     parser.add_argument(
         '-o',
@@ -36,68 +64,100 @@ def parse_args():
     return parser.parse_known_args()[0]
 
 
-def print_comments(
-        torrents: T.Dict[int, Torrent],
-        comments: T.Dict[int, T.List[TorrentComment]]
-) -> None:
-    for torrent_id, torrent_comments in sorted(
-            comments.items(),
-            key=lambda item: max(
-                comment.comment_date
-                for comment in item[1]
+@dataclass
+class Context:
+    guestbook_comments: T.List[dedibox.GuestbookComment]
+    nyaa_si_torrents: T.List[nyaa_si.Torrent]
+    nyaa_si_comments: T.List[nyaa_si.TorrentComment]
+
+
+def create_context(
+        args: configargparse.Namespace,
+        cached_context: T.Optional[Context]
+) -> Context:
+    print('Getting guest book comment list…', file=sys.stderr)
+    api = dedibox.DediboxApi()
+    api.login(args.dedibox_user, args.dedibox_pass)
+    guestbook_comments = list(api.list_guestbook_comments())
+
+    print(f'Getting nyaa.si torrent list…', file=sys.stderr)
+    api = nyaa_si.NyaaSiApi()
+    if args.nyaasi_pass:
+        api.login(args.nyaasi_user, args.nyaasi_pass)
+
+    nyaa_si_torrents = list(api.list_user_torrents(args.nyaasi_user))
+    nyaa_si_comments: T.List[nyaa_si.TorrentComment] = []
+
+    for torrent in nyaa_si_torrents:
+        if cached_context:
+            cached_comments = [
+                comment
+                for comment in cached_context.nyaa_si_comments
+                if comment.torrent_id == torrent.torrent_id
+            ]
+        else:
+            cached_comments = []
+
+        if len(cached_comments) == torrent.comment_count:
+            nyaa_si_comments += cached_comments
+        else:
+            print(
+                f'Getting nyaa.si comments for "{torrent.name}"…',
+                file=sys.stderr
             )
-    ):
-        torrent = torrents[torrent_id]
-        print('-' * 80)
-        print(torrent.name)
-        print()
+            nyaa_si_comments += list(
+                api.list_torrent_comments(torrent.torrent_id)
+            )
 
-        for comment in torrent_comments:
-            print(f'[{comment.comment_date}] {comment.author_name}:')
-            print(comment.text)
-            print()
-
-
-class CustomJsonEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, (datetime.date, datetime.datetime)):
-            return obj.isoformat()
-        return obj.__dict__
+    return Context(
+        guestbook_comments=guestbook_comments,
+        nyaa_si_torrents=nyaa_si_torrents,
+        nyaa_si_comments=nyaa_si_comments,
+    )
 
 
-def main() -> None:
-    args = parse_args()
+def write_report(args: configargparse.Namespace, context: Context) -> None:
+    torrents = []
+    for torrent in context.nyaa_si_torrents:
+        torrents.append(Torrent(
+            source='nyaa.si',
+            torrent_id=torrent.torrent_id,
+            torrent_link=f'https://nyaa.si/view/{torrent.torrent_id}',
+            name=torrent.name,
+            size=torrent.size,
+            upload_date=torrent.upload_date,
+            seeder_count=torrent.seeder_count,
+            leecher_count=torrent.leecher_count,
+            download_count=torrent.download_count,
+            comment_count=torrent.comment_count
+        ))
 
-    comments: T.Dict[int, T.List[TorrentComment]] = {}
-    if CACHE_PATH.exists():
-        torrents, comments = pickle.loads(CACHE_PATH.read_bytes())
+    comments = []
+    for comment in context.nyaa_si_comments:
+        comments.append(Comment(
+            source='nyaa.si',
+            comment_date=comment.comment_date,
+            author_name=comment.author_name,
+            author_avatar_url=comment.author_avatar_url,
+            text=comment.text,
+            torrent=next(
+                torrent
+                for torrent in torrents
+                if torrent.torrent_id == comment.torrent_id
+            )
+        ))
 
-    if not args.dev:
-        print(f'Getting torrent list…', file=sys.stderr)
-
-        api = NyaaSiApi()
-        if args.nyaasi_pass:
-            api.login(args.nyaasi_user, args.nyaasi_pass)
-
-        torrents = {
-            torrent.torrent_id: torrent
-            for torrent in api.list_user_torrents(args.nyaasi_user)
-        }
-
-        for torrent in torrents.values():
-            torrent_comments = len(comments.get(torrent.torrent_id, []))
-            if torrent_comments != torrent.comment_count:
-                print(
-                    f'Getting comments for "{torrent.name}"…', file=sys.stderr
-                )
-                comments[torrent.torrent_id] = list(
-                    api.list_torrent_comments(torrent.torrent_id)
-                )
-
-    CACHE_PATH.write_bytes(pickle.dumps((torrents, comments)))
+    for comment in context.guestbook_comments:
+        comments.append(Comment(
+            source='guestbook',
+            comment_date=comment.comment_date,
+            author_name=comment.author_name,
+            author_avatar_url=None,
+            text=comment.text,
+            torrent=None
+        ))
 
     print(f'Writing output to {args.output}…', file=sys.stderr)
-
     md = markdown.Markdown(extensions=['meta'])
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(ROOT_PATH / 'data'))
@@ -110,9 +170,27 @@ def main() -> None:
         .render(
             date=datetime.datetime.now(),
             torrents=torrents,
-            comments=sum(comments.values(), [])
+            comments=comments,
         )
     )
+
+
+def main() -> None:
+    args = parse_args()
+
+    if CACHE_PATH.exists():
+        prev_context = pickle.loads(CACHE_PATH.read_bytes())
+    else:
+        prev_context = None
+
+    if args.dev and prev_context:
+        context = prev_context
+    else:
+        context = create_context(args, prev_context)
+
+    CACHE_PATH.write_bytes(pickle.dumps(context))
+
+    write_report(args, context)
 
 
 if __name__ == '__main__':

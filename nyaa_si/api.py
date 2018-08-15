@@ -1,10 +1,10 @@
 import datetime
 import typing as T
+from dataclasses import dataclass
 
 import humanfriendly
 import lxml.html
 import requests
-from dataclasses import dataclass
 
 
 @dataclass
@@ -46,7 +46,7 @@ class InvalidAuth(ApiError):
 
 
 class UnexpectedHttpCode(ApiError):
-    def __init__(self, code):
+    def __init__(self, code: int) -> None:
         super().__init__(f'Unexpected status code "{code}".')
 
 
@@ -81,7 +81,7 @@ class NyaaSiApi:
         # if 'csrf_token' in response.text:
         #     raise InvalidAuth('Invalid username or password.')
 
-    def list_user_torrents(self, user_name: str) -> T.List[Torrent]:
+    def list_user_torrents(self, user_name: str) -> T.Iterable[Torrent]:
         page = 1
         while True:
             response = self.session.get(
@@ -105,7 +105,10 @@ class NyaaSiApi:
             if page > page_count:
                 break
 
-    def list_torrent_comments(self, torrent_id: int) -> T.List[TorrentComment]:
+    def list_torrent_comments(
+            self,
+            torrent_id: int
+    ) -> T.Iterable[TorrentComment]:
         response = self.session.get(f'https://nyaa.si/view/{torrent_id}')
         if response.status_code != 200:
             raise UnexpectedHttpCode(response.status_code)

@@ -62,23 +62,24 @@
           <tbody>
             <tr>
               <td>Downloads</td>
-              <td class='text-center'>{{ torrents.values()|sum(attribute='download_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(torrents.values()|sum(attribute='download_count') / torrents|length) }}</td>
+              <td class='text-center'>{{ torrents|sum(attribute='download_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='download_count') / torrents|length) }}</td>
             </tr>
             <tr>
               <td>Seeders</td>
-              <td class='text-center'>{{ torrents.values()|sum(attribute='seeder_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(torrents.values()|sum(attribute='seeder_count') / torrents|length) }}</td>
+              <td class='text-center'>{{ torrents|sum(attribute='seeder_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='seeder_count') / torrents|length) }}</td>
             </tr>
             <tr>
               <td>Leechers</td>
-              <td class='text-center'>{{ torrents.values()|sum(attribute='leecher_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(torrents.values()|sum(attribute='leecher_count') / torrents|length) }}</td>
+              <td class='text-center'>{{ torrents|sum(attribute='leecher_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='leecher_count') / torrents|length) }}</td>
             </tr>
             <tr>
               <td>Comments</td>
-              <td class='text-center'>{{ torrents.values()|sum(attribute='comment_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(torrents.values()|sum(attribute='comment_count') / torrents|length) }}</td>
+              <td class='text-center'>{{ torrents|sum(attribute='comment_count') }}
+                ({{ comments|length }} <sup title='includes guestbook comments that are not tied to any torrent'>[?]</sup>)</td>
+              <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='comment_count') / torrents|length) }}</td>
             </tr>
           </tbody>
         </table>
@@ -91,10 +92,12 @@
         <ul class='list-unstyled'>
           {% for comment in comments|sort(attribute='comment_date', reverse=True) %}
             <li class='border bg-light'>
-              <img class='avatar border'
-                   src='{{ comment.author_avatar_url }}'
-                   alt='{{ comment.author_name }}'
-              />
+              {% if comment.author_avatar_url %}
+                <img class='avatar border'
+                     src='{{ comment.author_avatar_url }}'
+                     alt='{{ comment.author_name }}'
+                />
+              {% endif %}
               <strong class='author'>
                 {{ comment.author_name }}
               </strong>
@@ -103,10 +106,13 @@
               </div>
               <small class='text-muted'>
                 {{ comment.comment_date.strftime('%Y-%m-%d %H:%M') }}
-                –
-                <a href='https://nyaa.si/view/{{ comment.torrent_id }}'>
-                  {{ torrents[comment.torrent_id].name }}
-                </a>
+                on
+                {{ comment.source }}
+                {% if comment.torrent %}
+                  (<a href='{{ comment.torrent.torrent_link }}'><!--
+                    -->{{ comment.torrent.name }}<!--
+                  --></a>)
+                {% endif %}
               </small>
             </li>
           {% endfor %}
