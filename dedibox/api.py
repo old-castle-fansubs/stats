@@ -22,6 +22,11 @@ class NotLoggedIn(ApiError):
         super().__init__('not logged in')
 
 
+class InvalidAuth(ApiError):
+    def __init__(self) -> None:
+        super().__init__('invalid credentials')
+
+
 @dataclass
 class TorrentStats:
     active_torrents: int
@@ -47,16 +52,20 @@ class DediboxApi:
     def __init__(self) -> None:
         self.transport = paramiko.Transport((DEDIBOX_HOST, DEDIBOX_PORT))
         self.sftp = None
+        self.transmission_tunnel = None
         self.transmission = None
 
     def login(self, user_name: str, password: str) -> None:
         self.transport.start_client(event=None, timeout=15)
         self.transport.get_remote_server_key()
-        self.transport.auth_password(
-            username=user_name,
-            password=password,
-            event=None
-        )
+        try:
+            self.transport.auth_password(
+                username=user_name,
+                password=password,
+                event=None
+            )
+        except paramiko.ssh_exception.AuthenticationException:
+            raise InvalidAuth
         self.sftp = paramiko.SFTPClient.from_transport(self.transport)
 
         self.transmission_tunnel = sshtunnel.SSHTunnelForwarder(
