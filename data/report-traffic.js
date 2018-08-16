@@ -8,9 +8,9 @@ data.sort(function(a, b){
   return a.day - b.day;
 });
 
-var margin = {top: 20, right: 20, bottom: 30, left: 50};
+var margin = {top: 10, right: 10, bottom: 20, left: 50};
 var width = 700 - margin.left - margin.right;
-var height = 400 - margin.top - margin.bottom;
+var height = 300 - margin.top - margin.bottom;
 
 var x = d3.scaleTime()
   .range([0, width])

@@ -12,6 +12,10 @@
       --avatar-pad: 0.75em;
     }
 
+    h2 {
+      margin-top: 0.5em;
+    }
+
     .general table {
       width: 100%;
       margin-left: auto;
@@ -77,7 +81,7 @@
 
     <section class='general row justify-content-center'>
       <div class='col-12 col-lg-4'>
-        <h2 class='text-center'>Torrents</h2>
+        <h2 class='text-center'>Nyaa.si</h2>
         <table class='table table-sm'>
           <thead class='thead-light'>
             <tr>
@@ -104,8 +108,7 @@
             </tr>
             <tr>
               <td>Comments</td>
-              <td class='text-center'>{{ torrents|sum(attribute='comment_count') }}
-                ({{ comments|length }} <sup title='includes guestbook comments that are not tied to any torrent'>[?]</sup>)</td>
+              <td class='text-center'>{{ torrents|sum(attribute='comment_count') }}</td>
               <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='comment_count') / torrents|length) }}</td>
             </tr>
           </tbody>
@@ -145,7 +148,7 @@
 
     <section class='traffic row justify-content-center'>
       <div class='col-12 col-lg-8'>
-        <h2 class='text-center'>Traffic</h2>
+        <h2 class='text-center'>Neocities traffic</h2>
 
         <script src='https://d3js.org/d3.v4.min.js'></script>
         <script>var data = {{ neocities_stats|tojson|safe }};</script>
