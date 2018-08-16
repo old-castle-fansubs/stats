@@ -38,7 +38,8 @@ class ApiError(RuntimeError):
 
 
 class UserNotFound(ApiError):
-    pass
+    def __init__(self, user_name: str) -> None:
+        super().__init__(f'user "{user_name}" was not found')
 
 
 class InvalidAuth(ApiError):
@@ -47,7 +48,7 @@ class InvalidAuth(ApiError):
 
 class UnexpectedHttpCode(ApiError):
     def __init__(self, code: int) -> None:
-        super().__init__(f'Unexpected status code "{code}".')
+        super().__init__(f'unexpected status code "{code}"')
 
 
 def _get_text(element: lxml.html.HtmlElement) -> str:
@@ -89,7 +90,7 @@ class NyaaSiApi:
             )
 
             if response.status_code == 404:
-                raise UserNotFound(f'User "{user_name}" was not found.')
+                raise UserNotFound(user_name)
             if response.status_code != 200:
                 raise UnexpectedHttpCode(response.status_code)
 
