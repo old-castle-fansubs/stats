@@ -115,7 +115,7 @@
           <tbody>
             <tr>
               <td>Torrents</td>
-              <td class='text-center' colspan='2'>{{ torrents|length }}</td>
+              <td class='text-center' colspan='2'>{{ torrents|length }} (active: {{ torrents|selectattr('visible', 'equalto', True)|list|length }})</td>
             </tr>
           </tbody>
         </table>

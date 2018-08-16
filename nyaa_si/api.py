@@ -18,6 +18,7 @@ class Torrent:
     leecher_count: int
     download_count: int
     comment_count: int
+    visible: bool
 
     @property
     def torrent_link(self) -> str:
@@ -137,7 +138,8 @@ class NyaaSiApi:
             comment_count=int(
                 row.xpath('normalize-space(.//a[@class="comments"])')
                 or '0'
-            )
+            ),
+            visible=row.xpath('./@class')[0] != 'warning'
         )
 
     def _make_comment(

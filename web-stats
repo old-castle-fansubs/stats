@@ -38,6 +38,7 @@ class Torrent:
     leecher_count: int
     download_count: int
     comment_count: int
+    visible: bool
 
 
 @dataclass
@@ -172,7 +173,8 @@ def write_report(args: configargparse.Namespace, context: Context) -> None:
             seeder_count=torrent.seeder_count,
             leecher_count=torrent.leecher_count,
             download_count=torrent.download_count,
-            comment_count=torrent.comment_count
+            comment_count=torrent.comment_count,
+            visible=torrent.visible
         ))
 
     comments = []
