@@ -72,52 +72,70 @@ def parse_args() -> configargparse.Namespace:
     return parser.parse_known_args()[0]
 
 
-def create_context(
-        args: configargparse.Namespace,
-        cached_context: T.Optional[Context]
-) -> Context:
-    api = dedibox.DediboxApi()
-    api.login(args.dedibox_user, args.dedibox_pass)
-    print('Getting guest book comment list…', file=sys.stderr)
-    guestbook_comments = list(api.list_guestbook_comments())
-    print('Getting transmission stats…', file=sys.stderr)
-    dedibox_torrent_stats = api.get_torrent_stats()
+class ContextBuilder:
+    def __init__(
+            self,
+            args: configargparse.Namespace,
+            cached_context: T.Optional[Context]
+    ) -> None:
+        self.args = args
+        self.cached_context = cached_context
 
-    print(f'Getting nyaa.si torrent list…', file=sys.stderr)
-    api = nyaa_si.NyaaSiApi()
-    if args.nyaasi_pass:
-        api.login(args.nyaasi_user, args.nyaasi_pass)
+    def build(self) -> Context:
+        guestbook_comments, dedibox_torrent_stats = self.build_dedibox_output()
+        nyaa_si_torrents, nyaa_si_comments = self.build_nyaa_si_output()
 
-    nyaa_si_torrents = list(api.list_user_torrents(args.nyaasi_user))
-    nyaa_si_comments: T.List[nyaa_si.TorrentComment] = []
+        return Context(
+            dedibox_torrent_stats=dedibox_torrent_stats,
+            guestbook_comments=guestbook_comments,
+            nyaa_si_torrents=nyaa_si_torrents,
+            nyaa_si_comments=nyaa_si_comments,
+        )
 
-    for torrent in nyaa_si_torrents:
-        if cached_context:
-            cached_comments = [
-                comment
-                for comment in cached_context.nyaa_si_comments
-                if comment.torrent_id == torrent.torrent_id
-            ]
-        else:
-            cached_comments = []
+    def build_dedibox_output(self) -> T.Tuple[
+            T.List[dedibox.GuestbookComment],
+            dedibox.TorrentStats
+    ]:
+        api = dedibox.DediboxApi()
+        api.login(self.args.dedibox_user, self.args.dedibox_pass)
+        print('Getting guest book comment list…', file=sys.stderr)
+        guestbook_comments = list(api.list_guestbook_comments())
+        print('Getting transmission stats…', file=sys.stderr)
+        torrent_stats = api.get_torrent_stats()
+        return guestbook_comments, torrent_stats
 
-        if len(cached_comments) == torrent.comment_count:
-            nyaa_si_comments += cached_comments
-        else:
-            print(
-                f'Getting nyaa.si comments for "{torrent.name}"…',
-                file=sys.stderr
-            )
-            nyaa_si_comments += list(
-                api.list_torrent_comments(torrent.torrent_id)
-            )
+    def build_nyaa_si_output(self) -> T.Tuple[
+            T.List[nyaa_si.Torrent],
+            T.List[nyaa_si.TorrentComment]
+    ]:
+        print(f'Getting nyaa.si torrent list…', file=sys.stderr)
+        api = nyaa_si.NyaaSiApi()
+        if self.args.nyaasi_pass:
+            api.login(self.args.nyaasi_user, self.args.nyaasi_pass)
 
-    return Context(
-        dedibox_torrent_stats=dedibox_torrent_stats,
-        guestbook_comments=guestbook_comments,
-        nyaa_si_torrents=nyaa_si_torrents,
-        nyaa_si_comments=nyaa_si_comments,
-    )
+        torrents = list(api.list_user_torrents(self.args.nyaasi_user))
+        comments: T.List[nyaa_si.TorrentComment] = []
+
+        for torrent in torrents:
+            if self.cached_context:
+                cached_comments = [
+                    comment
+                    for comment in self.cached_context.nyaa_si_comments
+                    if comment.torrent_id == torrent.torrent_id
+                ]
+            else:
+                cached_comments = []
+
+            if len(cached_comments) == torrent.comment_count:
+                comments += cached_comments
+            else:
+                print(
+                    f'Getting nyaa.si comments for "{torrent.name}"…',
+                    file=sys.stderr
+                )
+                comments += list(api.list_torrent_comments(torrent.torrent_id))
+
+        return torrents, comments
 
 
 def write_report(args: configargparse.Namespace, context: Context) -> None:
@@ -191,7 +209,7 @@ def main() -> None:
     if args.dev and prev_context:
         context = prev_context
     else:
-        context = create_context(args, prev_context)
+        context = ContextBuilder(args, prev_context).build()
 
     CACHE_PATH.write_bytes(pickle.dumps(context))
 
