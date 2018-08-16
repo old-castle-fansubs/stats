@@ -127,6 +127,11 @@
                      src='{{ comment.author_avatar_url }}'
                      alt='{{ comment.author_name }}'
                 />
+              {% else %}
+                <img class='avatar border'
+                     src='//:0'
+                     alt='{{ comment.author_name }}'
+                />
               {% endif %}
               <strong class='author'>
                 {{ comment.author_name }}
