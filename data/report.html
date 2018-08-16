@@ -112,6 +112,12 @@
               <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='comment_count') / torrents|length) }}</td>
             </tr>
           </tbody>
+          <tbody>
+            <tr>
+              <td>Torrents</td>
+              <td class='text-center' colspan='2'>{{ torrents|length }}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
