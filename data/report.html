@@ -18,6 +18,33 @@
       margin-right: auto;
     }
 
+    .line.hits {
+      fill: none;
+      stroke: hsla(200, 80%, 60%, 1);
+      stroke-width: 1px;
+    }
+    .line.views {
+      fill: none;
+      stroke: hsla(100, 80%, 40%, 1);
+      stroke-width: 1px;
+    }
+    .area.hits {
+      fill: hsla(200, 100%, 70%, 0.3);
+      stroke: none;
+    }
+    .area.views {
+      fill: hsla(100, 100%, 70%, 0.3);
+      stroke: none;
+    }
+    .grid line {
+      stroke: lightgrey;
+      stroke-opacity: 0.7;
+      shape-rendering: crispEdges;
+    }
+    .grid path {
+      stroke-width: 0;
+    }
+
     .text img {
       max-width: 100%;
     }
@@ -113,6 +140,22 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <section class='traffic row justify-content-center'>
+      <div class='col-12 col-lg-8'>
+        <h2 class='text-center'>Traffic</h2>
+
+        <script src='https://d3js.org/d3.v4.min.js'></script>
+        <script>var data = {{ neocities_stats|tojson|safe }};</script>
+        <script>{% include 'report-traffic.js' %}</script>
+
+        <p class='text-center'>
+          Total hits: {{ neocities_stats|sum(attribute='hits') }}
+          <span class='mr-2 ml-2'>·</span>
+          Total views: {{ neocities_stats|sum(attribute='views') }}
+        </p>
       </div>
     </section>
 

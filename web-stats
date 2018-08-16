@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import datetime
+import json
 import pickle
 import sys
 import typing as T
@@ -7,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import dedibox
+import neocities
 import nyaa_si
 
 import configargparse
@@ -16,6 +18,12 @@ import xdg
 
 CACHE_PATH = Path(xdg.XDG_CACHE_HOME) / 'oc-comments.dat'
 ROOT_PATH = Path(__file__).parent
+
+
+def json_default(obj: T.Any) -> T.Any:
+    if isinstance(obj, (datetime.datetime, datetime.date)):
+        return obj.isoformat()
+    return obj.__dict__
 
 
 @dataclass
@@ -44,6 +52,7 @@ class Comment:
 
 @dataclass
 class Context:
+    neocities_stats: T.List[neocities.TrafficStat]
     dedibox_torrent_stats: dedibox.TorrentStats
     guestbook_comments: T.List[dedibox.GuestbookComment]
     nyaa_si_torrents: T.List[nyaa_si.Torrent]
@@ -56,6 +65,8 @@ def parse_args() -> configargparse.Namespace:
         default_config_files=[Path(xdg.XDG_CONFIG_HOME) / 'oc-tools.yml']
     )
 
+    parser.add_argument('--neocities-user', required=True)
+    parser.add_argument('--neocities-pass', required=True)
     parser.add_argument('--dedibox-user', required=True)
     parser.add_argument('--dedibox-pass', required=True)
     parser.add_argument('--nyaasi-user', required=True)
@@ -82,10 +93,12 @@ class ContextBuilder:
         self.cached_context = cached_context
 
     def build(self) -> Context:
+        neocities_stats = self.build_neocities_output()
         guestbook_comments, dedibox_torrent_stats = self.build_dedibox_output()
         nyaa_si_torrents, nyaa_si_comments = self.build_nyaa_si_output()
 
         return Context(
+            neocities_stats=neocities_stats,
             dedibox_torrent_stats=dedibox_torrent_stats,
             guestbook_comments=guestbook_comments,
             nyaa_si_torrents=nyaa_si_torrents,
@@ -97,6 +110,7 @@ class ContextBuilder:
             dedibox.TorrentStats
     ]:
         api = dedibox.DediboxApi()
+        print('Logging into dedibox…', file=sys.stderr)
         api.login(self.args.dedibox_user, self.args.dedibox_pass)
         print('Getting guest book comment list…', file=sys.stderr)
         guestbook_comments = list(api.list_guestbook_comments())
@@ -104,15 +118,22 @@ class ContextBuilder:
         torrent_stats = api.get_torrent_stats()
         return guestbook_comments, torrent_stats
 
+    def build_neocities_output(self) -> T.List[neocities.TrafficStat]:
+        api = neocities.NeocitiesApi()
+        print('Logging into neocities…', file=sys.stderr)
+        api.login(self.args.neocities_user, self.args.neocities_pass)
+        print('Grabbing website traffic stats…', file=sys.stderr)
+        return list(api.get_traffic_stats())
+
     def build_nyaa_si_output(self) -> T.Tuple[
             T.List[nyaa_si.Torrent],
             T.List[nyaa_si.TorrentComment]
     ]:
-        print(f'Getting nyaa.si torrent list…', file=sys.stderr)
         api = nyaa_si.NyaaSiApi()
-        if self.args.nyaasi_pass:
-            api.login(self.args.nyaasi_user, self.args.nyaasi_pass)
+        print(f'Logging into nyaa.si…', file=sys.stderr)
+        api.login(self.args.nyaasi_user, self.args.nyaasi_pass)
 
+        print(f'Getting nyaa.si torrent list…', file=sys.stderr)
         torrents = list(api.list_user_torrents(self.args.nyaasi_user))
         comments: T.List[nyaa_si.TorrentComment] = []
 
@@ -185,12 +206,14 @@ def write_report(args: configargparse.Namespace, context: Context) -> None:
         loader=jinja2.FileSystemLoader(str(ROOT_PATH / 'data'))
     )
     env.filters['markdown'] = lambda text: jinja2.Markup(md.convert(text))
+    env.filters['tojson'] = lambda obj: json.dumps(obj, default=json_default)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         env
         .get_template('report.html')
         .render(
             date=datetime.datetime.now(),
+            neocities_stats=context.neocities_stats,
             dedibox_torrent_stats=context.dedibox_torrent_stats,
             torrents=torrents,
             comments=comments,
