@@ -68,6 +68,25 @@
       position: absolute;
       margin-left: calc(-1 * var(--avatar-size) - var(--avatar-pad));
     }
+
+    .svg-container {
+      display: inline-block;
+      position: relative;
+      width: calc(100% + 20px);
+      padding-bottom: calc(43% + 20px); /* aspect ratio */
+      margin: 0 -10px;
+      vertical-align: top;
+      overflow: hidden;
+    }
+    .svg-container>svg {
+      display: inline-block;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .svg-container>svg * {
+      vector-effect: non-scaling-stroke;
+    }
   </style>
 </head>
 <body>

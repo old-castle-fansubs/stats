@@ -8,95 +8,101 @@ data.sort(function(a, b){
   return a.day - b.day;
 });
 
-var margin = {top: 10, right: 10, bottom: 20, left: 50};
-var width = 700 - margin.left - margin.right;
-var height = 300 - margin.top - margin.bottom;
+window.addEventListener('DOMContentLoaded', function () {
+    var margin = {top: 10, right: 10, bottom: 20, left: 50};
+    var outerWidth = 700;
+    var outerHeight = 300;
+    var innerWidth = outerWidth - margin.left - margin.right;
+    var innerHeight = outerHeight - margin.top - margin.bottom;
 
-var x = d3.scaleTime()
-  .range([0, width])
-  .domain(d3.extent(data, function(d) { return d.day; }));
-var y = d3.scaleLinear()
-  .range([height, 0])
-  .domain([
-    0,
-    d3.max(data, function(d) {
-      return Math.max(d.hits, d.views);
-    })
-  ])
-  .nice();
+    var x = d3.scaleTime()
+        .range([0, innerWidth])
+        .domain(d3.extent(data, function(d) { return d.day; }));
+    var y = d3.scaleLinear()
+        .range([innerHeight, 0])
+        .domain([
+            0,
+            d3.max(data, function(d) {
+                return Math.max(d.hits, d.views);
+            })
+        ])
+        .nice();
 
-var svg = d3
-  .select('.traffic')
-  .append('svg')
-  .attr('width', width + margin.left + margin.right)
-  .attr('height', height + margin.top + margin.bottom)
-  .append('g')
-  .attr('transform', `translate(${margin.left},${margin.top})`);
+    var svg = d3
+        .select('.traffic>div')
+        .append('div')
+        .classed('svg-container', true)
+        .append('svg')
+        .attr('preserveAspectRatio', 'xMinYMin meet')
+        .attr('viewBox', `0 0 ${outerWidth} ${outerHeight}`)
+        .append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
 
-// grid
-svg.append('g')
-  .attr('class', 'grid')
-  .attr('transform', `translate(0,${height})`)
-  .call(d3.axisBottom(x)
-    .ticks(d3.timeMonth.every(1))
-    .tickSize(-height)
-    .tickFormat('')
-  )
-svg.append('g')
-  .attr('class', 'grid')
-  .call(d3.axisLeft(y)
-    .tickSize(-width)
-    .tickFormat('')
-  )
+    // grid
+    svg.append('g')
+        .attr('class', 'grid')
+        .attr('transform', `translate(0,${innerHeight})`)
+        .call(d3.axisBottom(x)
+            .ticks(d3.timeMonth.every(1))
+            .tickSize(-innerHeight)
+            .tickFormat('')
+        )
+    svg.append('g')
+        .attr('class', 'grid')
+        .call(d3.axisLeft(y)
+            .tickSize(-innerWidth)
+            .tickFormat('')
+        )
 
-// areas
-svg.append('path')
-  .data([data])
-  .attr('class', 'area hits')
-  .attr(
-    'd',
-    d3.area()
-    .x(function(d) { return x(d.day); })
-    .y0(height)
-    .y1(function(d) { return y(d.hits); })
-  );
-svg.append('path')
-  .data([data])
-  .attr('class', 'area views')
-  .attr(
-    'd',
-    d3.area()
-    .x(function(d) { return x(d.day); })
-    .y0(height)
-    .y1(function(d) { return y(d.views); })
-  );
+    // areas
+    svg.append('path')
+        .data([data])
+        .attr('class', 'area hits')
+        .attr(
+            'd',
+            d3.area()
+            .x(function(d) { return x(d.day); })
+            .y0(innerHeight)
+            .y1(function(d) { return y(d.hits); })
+        );
+    svg.append('path')
+        .data([data])
+        .attr('class', 'area views')
+        .attr(
+            'd',
+            d3.area()
+            .x(function(d) { return x(d.day); })
+            .y0(innerHeight)
+            .y1(function(d) { return y(d.views); })
+        );
 
-// lines
-svg.append('path')
-  .data([data])
-  .attr('class', 'line hits')
-  .attr(
-    'd',
-    d3.line()
-    .x(function(d) { return x(d.day); })
-    .y(function(d) { return y(d.hits); })
-  );
-svg.append('path')
-  .data([data])
-  .attr('class', 'line views')
-  .attr(
-    'd',
-    d3.line()
-    .x(function(d) { return x(d.day); })
-    .y(function(d) { return y(d.views); })
-  );
+    // lines
+    svg.append('path')
+        .data([data])
+        .attr('class', 'line hits')
+        .attr(
+            'd',
+            d3.line()
+            .x(function(d) { return x(d.day); })
+            .y(function(d) { return y(d.hits); })
+        );
+    svg.append('path')
+        .data([data])
+        .attr('class', 'line views')
+        .attr(
+            'd',
+            d3.line()
+            .x(function(d) { return x(d.day); })
+            .y(function(d) { return y(d.views); })
+        );
 
-// axes
-svg.append('g')
-  .attr('transform', `translate(0,${height})`)
-  .call(
-    d3.axisBottom(x)
-    .ticks(d3.timeMonth.every(3))
-  );
-svg.append('g')
-  .call(d3.axisLeft(y));
+    // axes
+    svg.append('g')
+        .attr('transform', `translate(0,${innerHeight})`)
+        .call(
+            d3.axisBottom(x)
+            .ticks(d3.timeMonth.every(3))
+        );
+    svg.append('g')
+        .call(d3.axisLeft(y));
+});
