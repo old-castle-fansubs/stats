@@ -1,11 +1,11 @@
-import datetime
-import sqlite3
+import json
 import tempfile
 import typing as T
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 
-import paramiko
+import requests
 import sshtunnel
 import transmissionrpc
 
@@ -32,15 +32,16 @@ class TorrentStats:
     active_torrents: int
     downloaded_bytes: int
     uploaded_bytes: int
-    uptime: datetime.timedelta
+    uptime: timedelta
 
 
 @dataclass
 class GuestbookComment:
     id: int
     parent_id: T.Optional[int]
-    comment_date: datetime.datetime
+    comment_date: datetime
     author_name: str
+    author_avatar_url: str
     author_email: T.Optional[str]
     author_website: T.Optional[str]
     text: str
@@ -50,24 +51,10 @@ class GuestbookComment:
 
 class DediboxApi:
     def __init__(self) -> None:
-        self.transport = paramiko.Transport((DEDIBOX_HOST, DEDIBOX_PORT))
-        self.sftp = None
         self.transmission_tunnel = None
         self.transmission = None
 
     def login(self, user_name: str, password: str) -> None:
-        self.transport.start_client(event=None, timeout=15)
-        self.transport.get_remote_server_key()
-        try:
-            self.transport.auth_password(
-                username=user_name,
-                password=password,
-                event=None
-            )
-        except paramiko.ssh_exception.AuthenticationException:
-            raise InvalidAuth
-        self.sftp = paramiko.SFTPClient.from_transport(self.transport)
-
         self.transmission_tunnel = sshtunnel.SSHTunnelForwarder(
              (DEDIBOX_HOST, 22),
              ssh_username=user_name,
@@ -89,36 +76,33 @@ class DediboxApi:
             active_torrents=self.transmission.session_stats().activeTorrentCount,
             downloaded_bytes=stats['downloadedBytes'],
             uploaded_bytes=stats['uploadedBytes'],
-            uptime=datetime.timedelta(seconds=stats['secondsActive'])
+            uptime=timedelta(seconds=stats['secondsActive'])
         )
 
     def list_guestbook_comments(self) -> T.Iterable[GuestbookComment]:
-        if self.sftp is None:
-            raise NotLoggedIn
+        response = requests.get(
+            'https://comments.oldcastle.moe/'
+            '?uri=%2Fguest_book.html&nested_limit=5'
+        )
+        response.raise_for_status()
 
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_path = Path(tmp_dir) / 'comments.db'
-            self.sftp.get('/var/isso/comments.db', str(tmp_path))
-            conn = sqlite3.connect(tmp_path)
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-            cursor.execute(
-                'select * from comments inner join threads on tid=threads.id'
+        items = json.loads(response.text)['replies']
+        while items:
+            item = items.pop()
+            items += item.get('replies', [])
+            yield GuestbookComment(
+                id=item['id'],
+                parent_id=item['parent'],
+                comment_date=datetime.utcfromtimestamp(item['created']),
+                author_name=item['author'],
+                author_avatar_url=item['gravatar_image'],
+                author_email=None,
+                author_website=item['website'],
+                text=item['text'],
+                likes=item['likes'],
+                dislikes=item['dislikes'],
             )
-            for row in cursor.fetchall():
-                yield GuestbookComment(
-                    id=row['id'],
-                    parent_id=row['parent'],
-                    comment_date=datetime.datetime.utcfromtimestamp(row['created']),
-                    author_name=row['author'],
-                    author_email=row['email'],
-                    author_website=row['website'],
-                    text=row['text'],
-                    likes=row['likes'],
-                    dislikes=row['dislikes'],
-                )
 
     def __del__(self) -> None:
-        self.transport.close()
         if self.transmission_tunnel is not None:
             self.transmission_tunnel.close()

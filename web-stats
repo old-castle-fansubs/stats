@@ -197,7 +197,7 @@ def write_report(args: configargparse.Namespace, context: Context) -> None:
             source='guestbook',
             comment_date=comment.comment_date,
             author_name=comment.author_name,
-            author_avatar_url=None,
+            author_avatar_url=comment.author_avatar_url,
             text=comment.text,
             torrent=None
         ))
