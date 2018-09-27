@@ -33,7 +33,7 @@ function sum(arr) {
 }
 
 var dataAvg = [];
-var dist = 7;
+var dist = 21;
 for (let i = 0; i < data.length; i++) {
     let hits = 0;
     let views = 0;
