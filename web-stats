@@ -7,6 +7,7 @@ import typing as T
 from dataclasses import dataclass
 from pathlib import Path
 
+import anidex
 import dedibox
 import neocities
 import nyaa_si
@@ -56,6 +57,7 @@ class Context:
     neocities_stats: T.List[neocities.TrafficStat]
     dedibox_torrent_stats: dedibox.TorrentStats
     guestbook_comments: T.List[dedibox.GuestbookComment]
+    anidex_torrents: T.List[anidex.Torrent]
     nyaa_si_torrents: T.List[nyaa_si.Torrent]
     nyaa_si_comments: T.List[nyaa_si.TorrentComment]
 
@@ -70,6 +72,9 @@ def parse_args() -> configargparse.Namespace:
     parser.add_argument('--neocities-pass', required=True)
     parser.add_argument('--dedibox-user', required=True)
     parser.add_argument('--dedibox-pass', required=True)
+    parser.add_argument('--anidex-user', required=True)
+    parser.add_argument('--anidex-pass', required=True)
+    parser.add_argument('--anidex-group', type=int, required=True)
     parser.add_argument('--nyaasi-user', required=True)
     parser.add_argument('--nyaasi-pass', required=True)
     parser.add_argument('-d', '--dev', action='store_true')
@@ -94,6 +99,7 @@ class ContextBuilder:
         self.cached_context = cached_context
 
     def build(self) -> Context:
+        anidex_torrents = self.build_anidex_output()
         neocities_stats = self.build_neocities_output()
         guestbook_comments, dedibox_torrent_stats = self.build_dedibox_output()
         nyaa_si_torrents, nyaa_si_comments = self.build_nyaa_si_output()
@@ -104,6 +110,7 @@ class ContextBuilder:
             guestbook_comments=guestbook_comments,
             nyaa_si_torrents=nyaa_si_torrents,
             nyaa_si_comments=nyaa_si_comments,
+            anidex_torrents=anidex_torrents,
         )
 
     def build_dedibox_output(self) -> T.Tuple[
@@ -159,9 +166,18 @@ class ContextBuilder:
 
         return torrents, comments
 
+    def build_anidex_output(self) -> T.List[anidex.Torrent]:
+        api = anidex.AnidexApi()
+        print(f'Logging into anidex.info…', file=sys.stderr)
+        api.login(self.args.anidex_user, self.args.anidex_pass)
+
+        print(f'Getting anidex.info torrent list…', file=sys.stderr)
+        return list(api.list_group_torrents(self.args.anidex_group))
+
 
 def write_report(args: configargparse.Namespace, context: Context) -> None:
     torrents = []
+
     for torrent in context.nyaa_si_torrents:
         torrents.append(Torrent(
             source='nyaa.si',
@@ -174,7 +190,22 @@ def write_report(args: configargparse.Namespace, context: Context) -> None:
             leecher_count=torrent.leecher_count,
             download_count=torrent.download_count,
             comment_count=torrent.comment_count,
-            visible=torrent.visible
+            visible=torrent.visible,
+        ))
+
+    for torrent in context.anidex_torrents:
+        torrents.append(Torrent(
+            source='anidex.info',
+            torrent_id=torrent.torrent_id,
+            torrent_link=f'https://anidex.info/torrent/{torrent.torrent_id}',
+            name=torrent.name,
+            size=torrent.size,
+            upload_date=torrent.upload_date,
+            seeder_count=torrent.seeder_count,
+            leecher_count=torrent.leecher_count,
+            download_count=torrent.download_count,
+            comment_count=torrent.comment_count,
+            visible=torrent.visible,
         ))
 
     comments = []
@@ -189,6 +220,7 @@ def write_report(args: configargparse.Namespace, context: Context) -> None:
                 torrent
                 for torrent in torrents
                 if torrent.torrent_id == comment.torrent_id
+                and torrent.source == 'nyaa.si'
             )
         ))
 
