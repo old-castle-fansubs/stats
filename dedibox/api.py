@@ -29,6 +29,7 @@ class InvalidAuth(ApiError):
 
 @dataclass
 class TorrentStats:
+    torrents: int
     active_torrents: int
     downloaded_bytes: int
     uploaded_bytes: int
@@ -73,6 +74,7 @@ class DediboxApi:
 
         stats = self.transmission.session_stats().cumulative_stats
         return TorrentStats(
+            torrents=self.transmission.session_stats().torrentCount,
             active_torrents=self.transmission.session_stats().activeTorrentCount,
             downloaded_bytes=stats['downloadedBytes'],
             uploaded_bytes=stats['uploadedBytes'],
