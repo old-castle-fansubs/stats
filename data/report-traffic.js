@@ -76,8 +76,7 @@ window.addEventListener('DOMContentLoaded', function () {
         .nice();
 
     var svg = d3
-        .select('.traffic>div')
-        .append('div')
+        .select('.traffic>.target')
         .classed('svg-container', true)
         .append('svg')
         .attr('preserveAspectRatio', 'xMinYMin meet')

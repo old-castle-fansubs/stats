@@ -101,16 +101,15 @@
 </head>
 <body>
   <main class='container'>
-    <header class='row justify-content-center'>
-      <div class='col-12 col-lg-8 text-center'>
-        <h1>Old Castle Fansubs - statistics</h1>
-        <p class='text-muted'>Generated at {{ date.strftime('%Y-%m-%d %H:%M') }}</p>
-      </div>
+    <header class='page-header'>
+      <h1>Old Castle Fansubs - statistics</h1>
+      <p class='text-muted'>Generated at {{ date.strftime('%Y-%m-%d %H:%M') }}</p>
     </header>
 
     <section class='general row justify-content-center'>
-      <div class='col-12 col-lg-4'>
-        <h2 class='text-center'>Nyaa.si</h2>
+      {% set nyaa_si_torrents = torrents|selectattr('source', 'equalto', 'nyaa.si')|list %}
+      <div class='col-md-4 col-12'>
+        <h2>Nyaa.si</h2>
         <table class='table table-sm'>
           <thead class='thead-light'>
             <tr>
@@ -122,36 +121,74 @@
           <tbody>
             <tr>
               <td>Downloads</td>
-              <td class='text-center'>{{ torrents|sum(attribute='download_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='download_count') / torrents|length) }}</td>
+              <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='download_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(nyaa_si_torrents|sum(attribute='download_count') / nyaa_si_torrents|length) }}</td>
             </tr>
             <tr>
               <td>Seeders</td>
-              <td class='text-center'>{{ torrents|sum(attribute='seeder_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='seeder_count') / torrents|length) }}</td>
+              <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='seeder_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(nyaa_si_torrents|sum(attribute='seeder_count') / nyaa_si_torrents|length) }}</td>
             </tr>
             <tr>
               <td>Leechers</td>
-              <td class='text-center'>{{ torrents|sum(attribute='leecher_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='leecher_count') / torrents|length) }}</td>
+              <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='leecher_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(nyaa_si_torrents|sum(attribute='leecher_count') / nyaa_si_torrents|length) }}</td>
             </tr>
             <tr>
               <td>Comments</td>
-              <td class='text-center'>{{ torrents|sum(attribute='comment_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(torrents|sum(attribute='comment_count') / torrents|length) }}</td>
+              <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='comment_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(nyaa_si_torrents|sum(attribute='comment_count') / nyaa_si_torrents|length) }}</td>
             </tr>
           </tbody>
           <tbody>
             <tr>
               <td>Torrents</td>
-              <td class='text-center' colspan='2'>{{ torrents|length }} (active: {{ torrents|selectattr('visible', 'equalto', True)|list|length }})</td>
+              <td class='text-center' colspan='2'>{{ nyaa_si_torrents|length }} (visible: {{ nyaa_si_torrents|selectattr('visible', 'equalto', True)|list|length }})</td>
             </tr>
           </tbody>
         </table>
-      </div>
 
-      <div class='col-12 col-lg-4'>
-        <h2 class='text-center'>Transmission</h2>
+        {% set anidex_torrents = torrents|selectattr('source', 'equalto', 'anidex.info')|list %}
+        <h2>Anidex.info</h2>
+        <table class='table table-sm'>
+          <thead class='thead-light'>
+            <tr>
+              <th>Subject</th>
+              <th class='text-center'>Total</th>
+              <th class='text-center'>Average</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Downloads</td>
+              <td class='text-center'>{{ anidex_torrents|sum(attribute='download_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(anidex_torrents|sum(attribute='download_count') / anidex_torrents|length) }}</td>
+            </tr>
+            <tr>
+              <td>Seeders</td>
+              <td class='text-center'>{{ anidex_torrents|sum(attribute='seeder_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(anidex_torrents|sum(attribute='seeder_count') / anidex_torrents|length) }}</td>
+            </tr>
+            <tr>
+              <td>Leechers</td>
+              <td class='text-center'>{{ anidex_torrents|sum(attribute='leecher_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(anidex_torrents|sum(attribute='leecher_count') / anidex_torrents|length) }}</td>
+            </tr>
+            <tr>
+              <td>Comments</td>
+              <td class='text-center'>{{ anidex_torrents|sum(attribute='comment_count') }}</td>
+              <td class='text-center'>{{ '%.2f'|format(anidex_torrents|sum(attribute='comment_count') / anidex_torrents|length) }}</td>
+            </tr>
+          </tbody>
+          <tbody>
+            <tr>
+              <td>Torrents</td>
+              <td class='text-center' colspan='2'>{{ anidex_torrents|length }} (visible: {{ anidex_torrents|selectattr('visible', 'equalto', True)|list|length }})</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Transmission</h2>
         <table class='table table-sm'>
           <thead class='thead-light'>
             <tr>
@@ -165,74 +202,75 @@
               <td class='text-center'>{{ dedibox_torrent_stats.uptime }}</td>
             </tr>
             <tr>
-              <td>Active torrents</td>
-              <td class='text-center'>{{ dedibox_torrent_stats.active_torrents }}</td>
+              <td>Uploaded</td>
+              <td class='text-center'>{{ dedibox_torrent_stats.uploaded_bytes|filesizeformat }}</td>
             </tr>
             <tr>
               <td>Downloaded</td>
               <td class='text-center'>{{ dedibox_torrent_stats.downloaded_bytes|filesizeformat }}</td>
             </tr>
+          </tbody>
+          <tbody>
             <tr>
-              <td>Uploaded</td>
-              <td class='text-center'>{{ dedibox_torrent_stats.uploaded_bytes|filesizeformat }}</td>
+              <td>Torrents</td>
+              <td class='text-center'>{{ dedibox_torrent_stats.torrents }} (active: {{ dedibox_torrent_stats.active_torrents }})</td>
             </tr>
           </tbody>
         </table>
       </div>
-    </section>
 
-    <section class='traffic row justify-content-center'>
-      <div class='col-12 col-lg-8'>
-        <h2 class='text-center'>Neocities traffic</h2>
+      <div class='col-md-8 col-12'>
+        <div class='traffic'>
+          <p class='float-right small mt-3 mb-0'>
+            Total hits: {{ neocities_stats|sum(attribute='hits') }}
+            <span class='mr-2 ml-2'>·</span>
+            Total views: {{ neocities_stats|sum(attribute='views') }}
+          </p>
 
-        <script src='https://d3js.org/d3.v4.min.js'></script>
-        <script>var data = {{ neocities_stats|tojson|safe }};</script>
-        <script>{% include 'report-traffic.js' %}</script>
+          <h2>Neocities traffic</h2>
 
-        <p class='text-center'>
-          Total hits: {{ neocities_stats|sum(attribute='hits') }}
-          <span class='mr-2 ml-2'>·</span>
-          Total views: {{ neocities_stats|sum(attribute='views') }}
-        </p>
-      </div>
-    </section>
+          <script src='https://d3js.org/d3.v4.min.js'></script>
+          <script>var data = {{ neocities_stats|tojson|safe }};</script>
+          <script>{% include 'report-traffic.js' %}</script>
 
-    <section class='comments row justify-content-center'>
-      <div class='col-12 col-lg-8'>
-        <h2 class='text-center'>Latest comments</h2>
-        <ul class='list-unstyled'>
-          {% for comment in comments|sort(attribute='comment_date', reverse=True) %}
-            <li class='border bg-light'>
-              {% if comment.author_avatar_url %}
-                <img class='avatar border'
-                     src='{{ comment.author_avatar_url }}'
-                     alt='{{ comment.author_name }}'
-                />
-              {% else %}
-                <img class='avatar border'
-                     src='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
-                     alt='{{ comment.author_name }}'
-                />
-              {% endif %}
-              <strong class='author'>
-                {{ comment.author_name }}
-              </strong>
-              <div class='text mt-1'>
-                {{ comment.text|markdown }}
-              </div>
-              <small class='text-muted'>
-                {{ comment.comment_date.strftime('%Y-%m-%d %H:%M') }}
-                on
-                {{ comment.source }}
-                {% if comment.torrent %}
-                  (<a href='{{ comment.torrent.torrent_link }}'><!--
-                    -->{{ comment.torrent.name }}<!--
-                  --></a>)
+          <div class='target'></div>
+        </div>
+
+        <div class='comments'>
+          <h2>Latest comments</h2>
+          <ul class='list-unstyled'>
+            {% for comment in comments|sort(attribute='comment_date', reverse=True) %}
+              <li class='border bg-light'>
+                {% if comment.author_avatar_url %}
+                  <img class='avatar border'
+                       src='{{ comment.author_avatar_url }}'
+                       alt='{{ comment.author_name }}'
+                  />
+                {% else %}
+                  <img class='avatar border'
+                       src='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
+                       alt='{{ comment.author_name }}'
+                  />
                 {% endif %}
-              </small>
-            </li>
-          {% endfor %}
-        </ul>
+                <strong class='author'>
+                  {{ comment.author_name }}
+                </strong>
+                <div class='text mt-1'>
+                  {{ comment.text|markdown }}
+                </div>
+                <small class='text-muted'>
+                  {{ comment.comment_date.strftime('%Y-%m-%d %H:%M') }}
+                  on
+                  {{ comment.source }}
+                  {% if comment.torrent %}
+                    (<a href='{{ comment.torrent.torrent_link }}'><!--
+                      -->{{ comment.torrent.name }}<!--
+                    --></a>)
+                  {% endif %}
+                </small>
+              </li>
+            {% endfor %}
+          </ul>
       </div>
     </section>
   </main>
