@@ -72,7 +72,7 @@ class AnidexApi:
             )
 
             if response.status_code == 404:
-                raise GroupNotFound(user_name)
+                raise GroupNotFound(group_id)
             if response.status_code != 200:
                 raise UnexpectedHttpCode(response.status_code)
 
