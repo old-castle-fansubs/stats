@@ -148,12 +148,45 @@ class Comment:
     torrent: T.Optional[Torrent]
 
 
+@dataclass
+class TrafficStat:
+    day: datetime.date
+    hits: int
+    views: int
+    hits_avg: int
+    views_avg: int
+
+
 class ReportContext:
     def __init__(self, context: Context) -> None:
         self.date = datetime.datetime.now()
-
-        self.neocities_stats = context.neocities_stats
         self.dedibox_torrent_stats = context.dedibox_torrent_stats
+
+        self.traffic_stats: T.List[TrafficStat] = []
+
+        for i, item in enumerate(context.neocities_stats):
+            total_weight = 0
+            hits_avg = 0
+            views_avg = 0
+            boundary = 21
+            for delta in range(-boundary, boundary + 1):
+                j = i + delta
+                try:
+                    other_item = context.neocities_stats[j]
+                except LookupError:
+                    continue
+                weight = boundary - abs(delta)
+                hits_avg += other_item.hits * weight
+                views_avg += other_item.views * weight
+                total_weight += weight
+
+            self.traffic_stats.append(TrafficStat(
+                day=item.day,
+                hits=item.hits,
+                views=item.views,
+                hits_avg=hits_avg / max(1, total_weight),
+                views_avg=views_avg / max(1, total_weight),
+            ))
 
         self.torrents: T.List[Torrent] = []
         for torrent in context.nyaa_si_torrents:

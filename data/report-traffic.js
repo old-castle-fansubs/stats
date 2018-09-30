@@ -1,58 +1,10 @@
 var parseTime = d3.timeParse('%Y-%m-%d');
 data.forEach(function(d) {
   d.day = parseTime(d.day);
-  d.hits = +d.hits;
-  d.views = +d.views;
 });
-data.sort(function(a, b){
+data.sort(function(a, b) {
   return a.day - b.day;
 });
-
-
-function sma(arr, range) {
-    var num = range || arr.length;
-    var res = [];
-    var len = arr.length + 1;
-    var idx = num - 1;
-    while (++idx < len) {
-        res.push(avg(arr, idx, num));
-    }
-    return res;
-}
-
-function avg(arr, idx, range) {
-    return sum(arr.slice(idx - range, idx)) / range;
-}
-
-function sum(arr) {
-    var len = arr.length;
-    var num = 0;
-    while (len--)
-        num += Number(arr[len]);
-    return num;
-}
-
-var dataAvg = [];
-var dist = 21;
-for (let i = 0; i < data.length; i++) {
-    let hits = 0;
-    let views = 0;
-    let denominator = 0;
-    for (let j = -dist; j <= dist; j++) {
-        var item = data[i + j];
-        if (item) {
-            let weight = dist - Math.abs(j);
-            hits += item.hits * weight;
-            views += item.views * weight;
-            denominator += weight;
-        }
-    }
-    dataAvg.push({
-        day: data[i].day,
-        hits: hits / Math.max(denominator, 1),
-        views: views / Math.max(denominator, 1)
-    });
-}
 
 
 window.addEventListener('DOMContentLoaded', function () {
@@ -144,22 +96,22 @@ window.addEventListener('DOMContentLoaded', function () {
 
     // average lines
     svg.append('path')
-        .data([dataAvg])
+        .data([data])
         .attr('class', 'line hits-avg')
         .attr(
             'd',
             d3.line()
             .x(function(d) { return x(d.day); })
-            .y(function(d) { return y(d.hits); })
+            .y(function(d) { return y(d.hits_avg); })
         );
     svg.append('path')
-        .data([dataAvg])
+        .data([data])
         .attr('class', 'line views-avg')
         .attr(
             'd',
             d3.line()
             .x(function(d) { return x(d.day); })
-            .y(function(d) { return y(d.views); })
+            .y(function(d) { return y(d.views_avg); })
         );
 
     // axes

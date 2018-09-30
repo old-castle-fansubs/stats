@@ -232,7 +232,7 @@
           <h2>Neocities traffic</h2>
 
           <script src='https://d3js.org/d3.v4.min.js'></script>
-          <script>var data = {{ neocities_stats|tojson|safe }};</script>
+          <script>var data = {{ traffic_stats|tojson|safe }};</script>
           <script>{% include 'report-traffic.js' %}</script>
 
           <div class='target'></div>
