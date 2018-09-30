@@ -163,19 +163,42 @@ class ReportContext:
         self.dedibox_torrent_stats = context.dedibox_torrent_stats
 
         self.traffic_stats: T.List[TrafficStat] = []
+        try:
+            import scipy.signal
+            weights = {
+                key - 21: value
+                for key, value in enumerate(
+                    scipy.signal.gaussian(M=21 * 2 + 1, std=7)
+                )
+            }
+        except ImportError:
+            weights = {
+                -21: 0.011108, -20: 0.016879, -19: 0.025130,
+                -18: 0.036658, -17: 0.052393, -16: 0.073369,
+                -15: 0.100668, -14: 0.135335, -13: 0.178263,
+                -12: 0.230066, -11: 0.290923, -10: 0.360447,
+                -9: 0.437564, -8: 0.520450, -7: 0.606530,
+                -6: 0.692569, -5: 0.774837, -4: 0.849365,
+                -3: 0.912254, -2: 0.960005, -1: 0.989847,
+                0: 1.0,
+                1: 0.989847, 2: 0.960005, 3: 0.912254,
+                4: 0.849365, 5: 0.774837, 6: 0.692569,
+                7: 0.606530, 8: 0.520450, 9: 0.437564,
+                10: 0.360447, 11: 0.290923, 12: 0.230066,
+                13: 0.178263, 14: 0.135335, 15: 0.100668,
+                16: 0.073369, 17: 0.052393, 18: 0.036658,
+                19: 0.025130, 20: 0.016879, 21: 0.011108,
+            }
 
         for i, item in enumerate(context.neocities_stats):
             total_weight = 0
             hits_avg = 0
             views_avg = 0
-            boundary = 21
-            for delta in range(-boundary, boundary + 1):
-                j = i + delta
+            for delta, weight in weights.items():
                 try:
-                    other_item = context.neocities_stats[j]
+                    other_item = context.neocities_stats[i + delta]
                 except LookupError:
                     continue
-                weight = boundary - abs(delta)
                 hits_avg += other_item.hits * weight
                 views_avg += other_item.views * weight
                 total_weight += weight
