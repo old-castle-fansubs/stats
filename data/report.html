@@ -224,9 +224,9 @@
       <div class='col-md-8 col-12'>
         <div class='traffic'>
           <p class='float-right small mt-3 mb-0'>
-            Total hits: {{ neocities_stats|sum(attribute='hits') }}
+            Total hits: {{ traffic_stats|sum(attribute='hits') }}
             <span class='mr-2 ml-2'>·</span>
-            Total views: {{ neocities_stats|sum(attribute='views') }}
+            Total views: {{ traffic_stats|sum(attribute='views') }}
           </p>
 
           <h2>Neocities traffic</h2>
