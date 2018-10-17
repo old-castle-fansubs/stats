@@ -7,15 +7,15 @@ import typing as T
 from dataclasses import dataclass
 from pathlib import Path
 
-import anidex
-import dedibox
-import neocities
-import nyaa_si
-
 import configargparse
 import jinja2
 import markdown
 import xdg
+
+import anidex
+import dedibox
+import neocities
+import nyaa_si
 
 CACHE_PATH = Path(xdg.XDG_CACHE_HOME) / 'oc-web-stats.dat'
 ROOT_PATH = Path(__file__).parent
@@ -265,18 +265,18 @@ class ReportContext:
             torrents: T.List[Torrent],
     ) -> Comment:
         return Comment(
-                source='nyaa.si',
-                comment_date=comment.comment_date,
-                author_name=comment.author_name,
-                author_avatar_url=comment.author_avatar_url,
-                text=comment.text,
-                torrent=next(
-                    torrent
-                    for torrent in torrents
-                    if torrent.torrent_id == comment.torrent_id
-                    and torrent.source == 'nyaa.si'
-                )
+            source='nyaa.si',
+            comment_date=comment.comment_date,
+            author_name=comment.author_name,
+            author_avatar_url=comment.author_avatar_url,
+            text=comment.text,
+            torrent=next(
+                torrent
+                for torrent in torrents
+                if torrent.torrent_id == comment.torrent_id
+                and torrent.source == 'nyaa.si'
             )
+        )
 
     @staticmethod
     def _comment_from_guestbook(comment: dedibox.GuestbookComment) -> Comment:

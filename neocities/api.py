@@ -41,6 +41,11 @@ class UnexpectedHttpCode(ApiError):
 class Api:
     def __init__(self) -> None:
         self.session = requests.Session()
+        self.user_name: T.Optional[str] = None
+
+    @property
+    def is_logged_in(self) -> bool:
+        return self.user_name is not None
 
     def login(self, user_name: str, password: str) -> None:
         response = self.session.get('https://neocities.org/signin')
@@ -62,7 +67,7 @@ class Api:
         self.user_name = user_name
 
     def get_traffic_stats(self) -> T.Iterable[TrafficStat]:
-        if not self.user_name:
+        if not self.is_logged_in:
             raise NotLoggedIn
 
         response = self.session.get(

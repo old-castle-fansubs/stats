@@ -57,10 +57,10 @@ class Api:
 
     def login(self, user_name: str, password: str) -> None:
         self.transmission_tunnel = sshtunnel.SSHTunnelForwarder(
-             (DEDIBOX_HOST, 22),
-             ssh_username=user_name,
-             ssh_password=password,
-             remote_bind_address=('127.0.0.1', 9091)
+            (DEDIBOX_HOST, 22),
+            ssh_username=user_name,
+            ssh_password=password,
+            remote_bind_address=('127.0.0.1', 9091)
         )
         self.transmission_tunnel.start()
         self.transmission = transmissionrpc.Client(

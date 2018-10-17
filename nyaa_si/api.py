@@ -55,8 +55,15 @@ class UnexpectedHttpCode(ApiError):
 class Api:
     def __init__(self) -> None:
         self.session = requests.Session()
+        self.user: T.Optional[str] = None
+        self.password: T.Optional[str] = None
+
+    def is_logged_in(self) -> bool:
+        return self.user is not None
 
     def login(self, user_name: str, password: str) -> None:
+        self.user = user_name
+        self.password = password
         self.session = requests.Session()
         response = self.session.get('https://nyaa.si/login')
         if response.status_code != 200:
