@@ -44,7 +44,7 @@ class UnexpectedHttpCode(ApiError):
         super().__init__(f'unexpected status code "{code}"')
 
 
-class AnidexApi:
+class Api:
     def __init__(self) -> None:
         self.session = requests.Session()
 

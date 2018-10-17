@@ -65,7 +65,7 @@ class ContextBuilder:
             T.List[dedibox.GuestbookComment],
             dedibox.TorrentStats
     ]:
-        api = dedibox.DediboxApi()
+        api = dedibox.Api()
         print('Logging into dedibox…', file=sys.stderr)
         api.login(self.args.dedibox_user, self.args.dedibox_pass)
         print('Getting guest book comment list…', file=sys.stderr)
@@ -75,7 +75,7 @@ class ContextBuilder:
         return guestbook_comments, torrent_stats
 
     def build_neocities_output(self) -> T.List[neocities.TrafficStat]:
-        api = neocities.NeocitiesApi()
+        api = neocities.Api()
         print('Logging into neocities…', file=sys.stderr)
         api.login(self.args.neocities_user, self.args.neocities_pass)
         print('Grabbing website traffic stats…', file=sys.stderr)
@@ -85,7 +85,7 @@ class ContextBuilder:
             T.List[nyaa_si.Torrent],
             T.List[nyaa_si.TorrentComment]
     ]:
-        api = nyaa_si.NyaaSiApi()
+        api = nyaa_si.Api()
         print(f'Logging into nyaa.si…', file=sys.stderr)
         api.login(self.args.nyaasi_user, self.args.nyaasi_pass)
 
@@ -115,7 +115,7 @@ class ContextBuilder:
         return torrents, comments
 
     def build_anidex_output(self) -> T.List[anidex.Torrent]:
-        api = anidex.AnidexApi()
+        api = anidex.Api()
         print(f'Logging into anidex.info…', file=sys.stderr)
         api.login(self.args.anidex_user, self.args.anidex_pass)
 

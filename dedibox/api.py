@@ -50,7 +50,7 @@ class GuestbookComment:
     dislikes: int
 
 
-class DediboxApi:
+class Api:
     def __init__(self) -> None:
         self.transmission_tunnel = None
         self.transmission = None

@@ -52,7 +52,7 @@ class UnexpectedHttpCode(ApiError):
         super().__init__(f'unexpected status code "{code}"')
 
 
-class NyaaSiApi:
+class Api:
     def __init__(self) -> None:
         self.session = requests.Session()
 
