@@ -17,7 +17,7 @@ import dedibox
 import neocities
 import nyaa_si
 
-CACHE_PATH = Path(xdg.XDG_CACHE_HOME) / 'oc-web-stats.dat'
+CACHE_PATH = Path(xdg.XDG_CACHE_HOME) / "oc-web-stats.dat"
 ROOT_PATH = Path(__file__).parent
 
 
@@ -39,9 +39,9 @@ class Context:
 
 class ContextBuilder:
     def __init__(
-            self,
-            args: configargparse.Namespace,
-            cached_context: T.Optional[Context]
+        self,
+        args: configargparse.Namespace,
+        cached_context: T.Optional[Context],
     ) -> None:
         self.args = args
         self.cached_context = cached_context
@@ -61,35 +61,33 @@ class ContextBuilder:
             anidex_torrents=anidex_torrents,
         )
 
-    def build_dedibox_output(self) -> T.Tuple[
-            T.List[dedibox.GuestbookComment],
-            dedibox.TorrentStats
-    ]:
+    def build_dedibox_output(
+        self
+    ) -> T.Tuple[T.List[dedibox.GuestbookComment], dedibox.TorrentStats]:
         api = dedibox.Api()
-        print('Logging into dedibox…', file=sys.stderr)
+        print("Logging into dedibox…", file=sys.stderr)
         api.login(self.args.dedibox_user, self.args.dedibox_pass)
-        print('Getting guest book comment list…', file=sys.stderr)
+        print("Getting guest book comment list…", file=sys.stderr)
         guestbook_comments = list(api.list_guestbook_comments())
-        print('Getting transmission stats…', file=sys.stderr)
+        print("Getting transmission stats…", file=sys.stderr)
         torrent_stats = api.get_torrent_stats()
         return guestbook_comments, torrent_stats
 
     def build_neocities_output(self) -> T.List[neocities.TrafficStat]:
         api = neocities.Api()
-        print('Logging into neocities…', file=sys.stderr)
+        print("Logging into neocities…", file=sys.stderr)
         api.login(self.args.neocities_user, self.args.neocities_pass)
-        print('Grabbing website traffic stats…', file=sys.stderr)
+        print("Grabbing website traffic stats…", file=sys.stderr)
         return list(api.get_traffic_stats())
 
-    def build_nyaa_si_output(self) -> T.Tuple[
-            T.List[nyaa_si.Torrent],
-            T.List[nyaa_si.TorrentComment]
-    ]:
+    def build_nyaa_si_output(
+        self
+    ) -> T.Tuple[T.List[nyaa_si.Torrent], T.List[nyaa_si.TorrentComment]]:
         api = nyaa_si.Api()
-        print(f'Logging into nyaa.si…', file=sys.stderr)
+        print(f"Logging into nyaa.si…", file=sys.stderr)
         api.login(self.args.nyaasi_user, self.args.nyaasi_pass)
 
-        print(f'Getting nyaa.si torrent list…', file=sys.stderr)
+        print(f"Getting nyaa.si torrent list…", file=sys.stderr)
         torrents = list(api.list_user_torrents(self.args.nyaasi_user))
         comments: T.List[nyaa_si.TorrentComment] = []
 
@@ -108,7 +106,7 @@ class ContextBuilder:
             else:
                 print(
                     f'Getting nyaa.si comments for "{torrent.name}"…',
-                    file=sys.stderr
+                    file=sys.stderr,
                 )
                 comments += list(api.list_torrent_comments(torrent.torrent_id))
 
@@ -116,10 +114,10 @@ class ContextBuilder:
 
     def build_anidex_output(self) -> T.List[anidex.Torrent]:
         api = anidex.Api()
-        print(f'Logging into anidex.info…', file=sys.stderr)
+        print(f"Logging into anidex.info…", file=sys.stderr)
         api.login(self.args.anidex_user, self.args.anidex_pass)
 
-        print(f'Getting anidex.info torrent list…', file=sys.stderr)
+        print(f"Getting anidex.info torrent list…", file=sys.stderr)
         return list(api.list_group_torrents(self.args.anidex_group))
 
 
@@ -165,6 +163,7 @@ class ReportContext:
         self.traffic_stats: T.List[TrafficStat] = []
         try:
             import scipy.signal
+
             weights = {
                 key - 21: value
                 for key, value in enumerate(
@@ -173,21 +172,49 @@ class ReportContext:
             }
         except ImportError:
             weights = {
-                -21: 0.011108, -20: 0.016879, -19: 0.025130,
-                -18: 0.036658, -17: 0.052393, -16: 0.073369,
-                -15: 0.100668, -14: 0.135335, -13: 0.178263,
-                -12: 0.230066, -11: 0.290923, -10: 0.360447,
-                -9: 0.437564, -8: 0.520450, -7: 0.606530,
-                -6: 0.692569, -5: 0.774837, -4: 0.849365,
-                -3: 0.912254, -2: 0.960005, -1: 0.989847,
+                -21: 0.011_108,
+                -20: 0.016_879,
+                -19: 0.025_130,
+                -18: 0.036_658,
+                -17: 0.052_393,
+                -16: 0.073_369,
+                -15: 0.100_668,
+                -14: 0.135_335,
+                -13: 0.178_263,
+                -12: 0.230_066,
+                -11: 0.290_923,
+                -10: 0.360_447,
+                -9: 0.437_564,
+                -8: 0.520_450,
+                -7: 0.606_530,
+                -6: 0.692_569,
+                -5: 0.774_837,
+                -4: 0.849_365,
+                -3: 0.912_254,
+                -2: 0.960_005,
+                -1: 0.989_847,
                 0: 1.0,
-                1: 0.989847, 2: 0.960005, 3: 0.912254,
-                4: 0.849365, 5: 0.774837, 6: 0.692569,
-                7: 0.606530, 8: 0.520450, 9: 0.437564,
-                10: 0.360447, 11: 0.290923, 12: 0.230066,
-                13: 0.178263, 14: 0.135335, 15: 0.100668,
-                16: 0.073369, 17: 0.052393, 18: 0.036658,
-                19: 0.025130, 20: 0.016879, 21: 0.011108,
+                1: 0.989_847,
+                2: 0.960_005,
+                3: 0.912_254,
+                4: 0.849_365,
+                5: 0.774_837,
+                6: 0.692_569,
+                7: 0.606_530,
+                8: 0.520_450,
+                9: 0.437_564,
+                10: 0.360_447,
+                11: 0.290_923,
+                12: 0.230_066,
+                13: 0.178_263,
+                14: 0.135_335,
+                15: 0.100_668,
+                16: 0.073_369,
+                17: 0.052_393,
+                18: 0.036_658,
+                19: 0.025_130,
+                20: 0.016_879,
+                21: 0.011_108,
             }
 
         for i, item in enumerate(context.neocities_stats):
@@ -203,13 +230,15 @@ class ReportContext:
                 views_avg += other_item.views * weight
                 total_weight += weight
 
-            self.traffic_stats.append(TrafficStat(
-                day=item.day,
-                hits=item.hits,
-                views=item.views,
-                hits_avg=hits_avg / max(1, total_weight),
-                views_avg=views_avg / max(1, total_weight),
-            ))
+            self.traffic_stats.append(
+                TrafficStat(
+                    day=item.day,
+                    hits=item.hits,
+                    views=item.views,
+                    hits_avg=hits_avg / max(1, total_weight),
+                    views_avg=views_avg / max(1, total_weight),
+                )
+            )
 
         self.torrents: T.List[Torrent] = []
         for torrent in context.nyaa_si_torrents:
@@ -230,9 +259,9 @@ class ReportContext:
     @staticmethod
     def _torrent_from_nyaa_si(torrent: nyaa_si.Torrent) -> Torrent:
         return Torrent(
-            source='nyaa.si',
+            source="nyaa.si",
             torrent_id=torrent.torrent_id,
-            torrent_link=f'https://nyaa.si/view/{torrent.torrent_id}',
+            torrent_link=f"https://nyaa.si/view/{torrent.torrent_id}",
             name=torrent.name,
             size=torrent.size,
             upload_date=torrent.upload_date,
@@ -246,9 +275,9 @@ class ReportContext:
     @staticmethod
     def _torrent_from_anidex(torrent: anidex.Torrent) -> Torrent:
         return Torrent(
-            source='anidex.info',
+            source="anidex.info",
             torrent_id=torrent.torrent_id,
-            torrent_link=f'https://anidex.info/torrent/{torrent.torrent_id}',
+            torrent_link=f"https://anidex.info/torrent/{torrent.torrent_id}",
             name=torrent.name,
             size=torrent.size,
             upload_date=torrent.upload_date,
@@ -261,11 +290,10 @@ class ReportContext:
 
     @staticmethod
     def _comment_from_nyaa_si(
-            comment: nyaa_si.TorrentComment,
-            torrents: T.List[Torrent],
+        comment: nyaa_si.TorrentComment, torrents: T.List[Torrent]
     ) -> Comment:
         return Comment(
-            source='nyaa.si',
+            source="nyaa.si",
             comment_date=comment.comment_date,
             author_name=comment.author_name,
             author_avatar_url=comment.author_avatar_url,
@@ -274,14 +302,14 @@ class ReportContext:
                 torrent
                 for torrent in torrents
                 if torrent.torrent_id == comment.torrent_id
-                and torrent.source == 'nyaa.si'
-            )
+                and torrent.source == "nyaa.si"
+            ),
         )
 
     @staticmethod
     def _comment_from_guestbook(comment: dedibox.GuestbookComment) -> Comment:
         return Comment(
-            source='guestbook',
+            source="guestbook",
             comment_date=comment.comment_date,
             author_name=comment.author_name,
             author_avatar_url=comment.author_avatar_url,
@@ -291,44 +319,39 @@ class ReportContext:
 
 
 def write_report(
-        args: configargparse.Namespace,
-        report_context: ReportContext,
+    args: configargparse.Namespace, report_context: ReportContext
 ) -> None:
-    print(f'Writing output to {args.output}…', file=sys.stderr)
-    md = markdown.Markdown(extensions=['meta'])
+    print(f"Writing output to {args.output}…", file=sys.stderr)
+    md = markdown.Markdown(extensions=["meta"])
     env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(str(ROOT_PATH / 'data'))
+        loader=jinja2.FileSystemLoader(str(ROOT_PATH / "data"))
     )
-    env.filters['markdown'] = lambda text: jinja2.Markup(md.convert(text))
-    env.filters['tojson'] = lambda obj: json.dumps(obj, default=json_default)
+    env.filters["markdown"] = lambda text: jinja2.Markup(md.convert(text))
+    env.filters["tojson"] = lambda obj: json.dumps(obj, default=json_default)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
-        env.get_template('report.html').render(**report_context.__dict__)
+        env.get_template("report.html").render(**report_context.__dict__)
     )
 
 
 def parse_args() -> configargparse.Namespace:
     parser = configargparse.ArgumentParser(
         formatter_class=configargparse.RawTextHelpFormatter,
-        default_config_files=[Path(xdg.XDG_CONFIG_HOME) / 'oc-tools.yml']
+        default_config_files=[Path(xdg.XDG_CONFIG_HOME) / "oc-tools.yml"],
     )
 
-    parser.add_argument('--neocities-user', required=True)
-    parser.add_argument('--neocities-pass', required=True)
-    parser.add_argument('--dedibox-user', required=True)
-    parser.add_argument('--dedibox-pass', required=True)
-    parser.add_argument('--anidex-user', required=True)
-    parser.add_argument('--anidex-pass', required=True)
-    parser.add_argument('--anidex-group', type=int, required=True)
-    parser.add_argument('--nyaasi-user', required=True)
-    parser.add_argument('--nyaasi-pass', required=True)
-    parser.add_argument('-d', '--dev', action='store_true')
+    parser.add_argument("--neocities-user", required=True)
+    parser.add_argument("--neocities-pass", required=True)
+    parser.add_argument("--dedibox-user", required=True)
+    parser.add_argument("--dedibox-pass", required=True)
+    parser.add_argument("--anidex-user", required=True)
+    parser.add_argument("--anidex-pass", required=True)
+    parser.add_argument("--anidex-group", type=int, required=True)
+    parser.add_argument("--nyaasi-user", required=True)
+    parser.add_argument("--nyaasi-pass", required=True)
+    parser.add_argument("-d", "--dev", action="store_true")
     parser.add_argument(
-        '-o',
-        '--output',
-        default=Path('stats.html'),
-        type=Path,
-        required=False
+        "-o", "--output", default=Path("stats.html"), type=Path, required=False
     )
 
     return parser.parse_known_args()[0]
@@ -353,5 +376,5 @@ def main() -> None:
     write_report(args, report_context)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

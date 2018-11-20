@@ -25,12 +25,12 @@ class ApiError(RuntimeError):
 
 class NotLoggedIn(ApiError):
     def __init__(self) -> None:
-        super().__init__('not logged in')
+        super().__init__("not logged in")
 
 
 class InvalidAuth(ApiError):
     def __init__(self) -> None:
-        super().__init__('invalid credentials')
+        super().__init__("invalid credentials")
 
 
 class UnexpectedHttpCode(ApiError):
@@ -48,21 +48,21 @@ class Api:
         return self.user_name is not None
 
     def login(self, user_name: str, password: str) -> None:
-        response = self.session.get('https://neocities.org/signin')
+        response = self.session.get("https://neocities.org/signin")
         if response.status_code != 200:
             raise UnexpectedHttpCode(response.status_code)
 
         tree = lxml.html.fromstring(response.content)
         csrf_token = tree.xpath('//input[@name="csrf_token"]/@value')[0]
         response = self.session.post(
-            f'https://neocities.org/signin',
+            f"https://neocities.org/signin",
             data={
-                'csrf_token': csrf_token,
-                'username': user_name,
-                'password': password
+                "csrf_token": csrf_token,
+                "username": user_name,
+                "password": password,
             },
         )
-        if 'Invalid login' in response.text:
+        if "Invalid login" in response.text:
             raise InvalidAuth
         self.user_name = user_name
 
@@ -71,19 +71,19 @@ class Api:
             raise NotLoggedIn
 
         response = self.session.get(
-            f'https://neocities.org/site/{self.user_name}'
-            f'/stats?days=sincethebigbang&format=csv'
+            f"https://neocities.org/site/{self.user_name}"
+            f"/stats?days=sincethebigbang&format=csv"
         )
         if response.status_code != 200:
             raise UnexpectedHttpCode(response.status_code)
         reader = csv.DictReader(response.text.splitlines())
         for row in reader:
             yield TrafficStat(
-                day=dateutil.parser.parse(row['day']).date(),
-                hits=int(row['hits']),
-                views=int(row['views']),
-                comments=int(row['comments']),
-                follows=int(row['follows']),
-                site_updates=int(row['site_updates']),
-                bandwidth=int(row['bandwidth'])
+                day=dateutil.parser.parse(row["day"]).date(),
+                hits=int(row["hits"]),
+                views=int(row["views"]),
+                comments=int(row["comments"]),
+                follows=int(row["follows"]),
+                site_updates=int(row["site_updates"]),
+                bandwidth=int(row["bandwidth"]),
             )

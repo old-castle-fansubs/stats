@@ -9,7 +9,7 @@ import requests
 import sshtunnel
 import transmissionrpc
 
-DEDIBOX_HOST = 'oldcastle.moe'
+DEDIBOX_HOST = "oldcastle.moe"
 DEDIBOX_PORT = 22
 
 
@@ -19,12 +19,12 @@ class ApiError(RuntimeError):
 
 class NotLoggedIn(ApiError):
     def __init__(self) -> None:
-        super().__init__('not logged in')
+        super().__init__("not logged in")
 
 
 class InvalidAuth(ApiError):
     def __init__(self) -> None:
-        super().__init__('invalid credentials')
+        super().__init__("invalid credentials")
 
 
 @dataclass
@@ -60,12 +60,11 @@ class Api:
             (DEDIBOX_HOST, 22),
             ssh_username=user_name,
             ssh_password=password,
-            remote_bind_address=('127.0.0.1', 9091)
+            remote_bind_address=("127.0.0.1", 9091),
         )
         self.transmission_tunnel.start()
         self.transmission = transmissionrpc.Client(
-            '127.0.0.1',
-            port=self.transmission_tunnel.local_bind_port
+            "127.0.0.1", port=self.transmission_tunnel.local_bind_port
         )
 
     def get_torrent_stats(self) -> TorrentStats:
@@ -76,33 +75,33 @@ class Api:
         return TorrentStats(
             torrents=self.transmission.session_stats().torrentCount,
             active_torrents=self.transmission.session_stats().activeTorrentCount,
-            downloaded_bytes=stats['downloadedBytes'],
-            uploaded_bytes=stats['uploadedBytes'],
-            uptime=timedelta(seconds=stats['secondsActive'])
+            downloaded_bytes=stats["downloadedBytes"],
+            uploaded_bytes=stats["uploadedBytes"],
+            uptime=timedelta(seconds=stats["secondsActive"]),
         )
 
     def list_guestbook_comments(self) -> T.Iterable[GuestbookComment]:
         response = requests.get(
-            'https://comments.oldcastle.moe/'
-            '?uri=%2Fguest_book.html&nested_limit=5'
+            "https://comments.oldcastle.moe/"
+            "?uri=%2Fguest_book.html&nested_limit=5"
         )
         response.raise_for_status()
 
-        items = json.loads(response.text)['replies']
+        items = json.loads(response.text)["replies"]
         while items:
             item = items.pop()
-            items += item.get('replies', [])
+            items += item.get("replies", [])
             yield GuestbookComment(
-                id=item['id'],
-                parent_id=item['parent'],
-                comment_date=datetime.utcfromtimestamp(item['created']),
-                author_name=item['author'],
-                author_avatar_url=item['gravatar_image'],
+                id=item["id"],
+                parent_id=item["parent"],
+                comment_date=datetime.utcfromtimestamp(item["created"]),
+                author_name=item["author"],
+                author_avatar_url=item["gravatar_image"],
                 author_email=None,
-                author_website=item['website'],
-                text=item['text'],
-                likes=item['likes'],
-                dislikes=item['dislikes'],
+                author_website=item["website"],
+                text=item["text"],
+                likes=item["likes"],
+                dislikes=item["dislikes"],
             )
 
     def __del__(self) -> None:
