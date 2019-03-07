@@ -159,8 +159,8 @@ class TrafficStat:
     day: datetime.date
     hits: int
     views: int
-    hits_avg: int
-    views_avg: int
+    hits_avg: float
+    views_avg: float
 
 
 class ReportContext:
@@ -249,20 +249,22 @@ class ReportContext:
             )
 
         self.torrents: T.List[Torrent] = []
-        for torrent in context.nyaa_si_torrents:
-            self.torrents.append(self._torrent_from_nyaa_si(torrent))
+        for nyaa_si_torrent in context.nyaa_si_torrents:
+            self.torrents.append(self._torrent_from_nyaa_si(nyaa_si_torrent))
 
-        for torrent in context.anidex_torrents:
-            self.torrents.append(self._torrent_from_anidex(torrent))
+        for anidex_torrent in context.anidex_torrents:
+            self.torrents.append(self._torrent_from_anidex(anidex_torrent))
 
         self.comments: T.List[Comment] = []
-        for comment in context.nyaa_si_comments:
+        for nyaa_si_comment in context.nyaa_si_comments:
             self.comments.append(
-                self._comment_from_nyaa_si(comment, self.torrents)
+                self._comment_from_nyaa_si(nyaa_si_comment, self.torrents)
             )
 
-        for comment in context.guestbook_comments:
-            self.comments.append(self._comment_from_guestbook(comment))
+        for guestbook_comment in context.guestbook_comments:
+            self.comments.append(
+                self._comment_from_guestbook(guestbook_comment)
+            )
 
     @staticmethod
     def _torrent_from_nyaa_si(torrent: nyaa_si.Torrent) -> Torrent:
