@@ -328,6 +328,14 @@ class ReportContext:
         )
 
 
+def percent(
+    dividend: T.Union[int, float], divisor: T.Union[int, float]
+) -> str:
+    if not divisor:
+        return "0.0"
+    return f"{dividend / divisor:.2f}"
+
+
 def write_report(
     args: configargparse.Namespace, report_context: ReportContext
 ) -> None:
@@ -338,6 +346,7 @@ def write_report(
     )
     env.filters["markdown"] = lambda text: jinja2.Markup(md.convert(text))
     env.filters["tojson"] = lambda obj: json.dumps(obj, default=json_default)
+    env.globals.update(percent=percent)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         env.get_template("report.html").render(**report_context.__dict__)

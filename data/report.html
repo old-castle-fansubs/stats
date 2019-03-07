@@ -124,22 +124,22 @@
             <tr>
               <td>Downloads</td>
               <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='download_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(nyaa_si_torrents|sum(attribute='download_count') / nyaa_si_torrents|length) }}</td>
+              <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='download_count'), nyaa_si_torrents|length) }}</td>
             </tr>
             <tr>
               <td>Seeders</td>
               <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='seeder_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(nyaa_si_torrents|sum(attribute='seeder_count') / nyaa_si_torrents|length) }}</td>
+              <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='seeder_count'), nyaa_si_torrents|length) }}</td>
             </tr>
             <tr>
               <td>Leechers</td>
               <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='leecher_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(nyaa_si_torrents|sum(attribute='leecher_count') / nyaa_si_torrents|length) }}</td>
+              <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='leecher_count'), nyaa_si_torrents|length) }}</td>
             </tr>
             <tr>
               <td>Comments</td>
               <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='comment_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(nyaa_si_torrents|sum(attribute='comment_count') / nyaa_si_torrents|length) }}</td>
+              <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='comment_count'), nyaa_si_torrents|length) }}</td>
             </tr>
           </tbody>
           <tbody>
@@ -164,22 +164,22 @@
             <tr>
               <td>Downloads</td>
               <td class='text-center'>{{ anidex_torrents|sum(attribute='download_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(anidex_torrents|sum(attribute='download_count') / anidex_torrents|length) }}</td>
+              <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='download_count'), anidex_torrents|length) }}</td>
             </tr>
             <tr>
               <td>Seeders</td>
               <td class='text-center'>{{ anidex_torrents|sum(attribute='seeder_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(anidex_torrents|sum(attribute='seeder_count') / anidex_torrents|length) }}</td>
+              <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='seeder_count'), anidex_torrents|length) }}</td>
             </tr>
             <tr>
               <td>Leechers</td>
               <td class='text-center'>{{ anidex_torrents|sum(attribute='leecher_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(anidex_torrents|sum(attribute='leecher_count') / anidex_torrents|length) }}</td>
+              <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='leecher_count'), anidex_torrents|length) }}</td>
             </tr>
             <tr>
               <td>Comments</td>
               <td class='text-center'>{{ anidex_torrents|sum(attribute='comment_count') }}</td>
-              <td class='text-center'>{{ '%.2f'|format(anidex_torrents|sum(attribute='comment_count') / anidex_torrents|length) }}</td>
+              <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='comment_count'), anidex_torrents|length) }}</td>
             </tr>
           </tbody>
           <tbody>
