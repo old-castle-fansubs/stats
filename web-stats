@@ -117,8 +117,16 @@ class ContextBuilder:
         print(f"Logging into anidex.info…", file=sys.stderr)
         api.login(self.args.anidex_user, self.args.anidex_pass)
 
+        def page_callback(offset: int) -> None:
+            print(
+                f"Getting anidex.info torrent list… (offset {offset})",
+                file=sys.stderr,
+            )
+
         print(f"Getting anidex.info torrent list…", file=sys.stderr)
-        return list(api.list_group_torrents(self.args.anidex_group))
+        return list(
+            api.list_group_torrents(self.args.anidex_group, page_callback)
+        )
 
 
 @dataclass

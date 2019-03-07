@@ -59,9 +59,14 @@ class Api:
         if response.status_code != 200:
             raise UnexpectedHttpCode(response.status_code)
 
-    def list_group_torrents(self, group_id: int) -> T.Iterable[Torrent]:
+    def list_group_torrents(
+        self, group_id: int, page_callback: T.Optional[T.Callable[[int], None]]
+    ) -> T.Iterable[Torrent]:
         offset = 0
         while True:
+            if page_callback:
+                page_callback(offset)
+
             response = self.session.get(
                 f"https://anidex.info/?page=group&id={group_id}&offset={offset}"
             )
