@@ -120,7 +120,9 @@ class Api:
             raise UnexpectedHttpCode(response.status_code)
 
         tree = lxml.html.fromstring(response.content)
-        for row in tree.xpath('//div[@id="comments"]/div[@id]'):
+        for row in tree.xpath(
+            '//div[@id="comments"]//div[starts-with(@id, "com-")]'
+        ):
             yield self._make_comment(torrent_id, row)
 
     def _make_torrent(self, row: lxml.html.HtmlElement) -> Torrent:
