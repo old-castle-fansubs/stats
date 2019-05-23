@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import typing as T
@@ -5,6 +6,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import dateutil.parser
+import paramiko
 import requests
 import sshtunnel
 import transmissionrpc
@@ -47,7 +50,6 @@ class GuestbookComment:
     author_website: T.Optional[str]
     text: str
     likes: int
-    dislikes: int
 
 
 class Api:
@@ -81,27 +83,31 @@ class Api:
         )
 
     def list_guestbook_comments(self) -> T.Iterable[GuestbookComment]:
-        response = requests.get(
-            "https://comments.oldcastle.moe/"
-            "?uri=%2Fguest_book.html&nested_limit=5"
-        )
-        response.raise_for_status()
+        ssh_client = paramiko.SSHClient()
+        ssh_client.load_system_host_keys()
+        ssh_client.connect(DEDIBOX_HOST)
+        sftp_client = ssh_client.open_sftp()
+        with sftp_client.open("srv/website/data/comments.json") as handle:
+            content = handle.read()
+        sftp_client.close()
+        ssh_client.close()
 
-        items = json.loads(response.text)["replies"]
-        while items:
-            item = items.pop()
-            items += item.get("replies", [])
+        items = json.loads(content)
+        for item in items:
+            chksum = hashlib.md5(
+                (item["email"] or item["author"]).encode()
+            ).hexdigest()
+            avatar_url = f"https://www.gravatar.com/avatar/{chksum}?d=retro"
             yield GuestbookComment(
                 id=item["id"],
-                parent_id=item["parent"],
-                comment_date=datetime.utcfromtimestamp(item["created"]),
+                parent_id=item["pid"],
+                comment_date=dateutil.parser.parse(item["created"]),
                 author_name=item["author"],
-                author_avatar_url=item["gravatar_image"],
-                author_email=None,
+                author_avatar_url=avatar_url,
+                author_email=item["email"],
                 author_website=item["website"],
                 text=item["text"],
                 likes=item["likes"],
-                dislikes=item["dislikes"],
             )
 
     def __del__(self) -> None:
