@@ -1,6 +1,9 @@
 import datetime
+import json
 import typing as T
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
 
 import humanfriendly
 import lxml.html
@@ -13,7 +16,7 @@ class Torrent:
     name: str
     magnet_link: str
     size: int
-    upload_date: datetime.datetime
+    upload_date: datetime
     seeder_count: int
     leecher_count: int
     download_count: int
@@ -28,7 +31,7 @@ class Torrent:
 @dataclass
 class TorrentComment:
     torrent_id: int
-    comment_date: datetime.datetime
+    comment_date: datetime
     author_name: str
     author_avatar_url: str
     text: str
@@ -133,9 +136,10 @@ class Api:
             name=row.xpath('.//td[2]/a[not(@class="comments")]/@title')[0],
             magnet_link=row.xpath('.//a[contains(@href, "magnet")]/@href')[0],
             size=humanfriendly.parse_size(row.xpath(".//td[4]/text()")[0]),
-            upload_date=datetime.datetime(
-                *humanfriendly.parse_date(row.xpath(".//td[5]/text()")[0])
-            ),
+            upload_date=datetime(
+                *humanfriendly.parse_date(row.xpath(".//td[5]/text()")[0]),
+                tzinfo=timezone.utc,
+            ).replace(),
             seeder_count=int(row.xpath(".//td[6]/text()")[0]),
             leecher_count=int(row.xpath(".//td[7]/text()")[0]),
             download_count=int(row.xpath(".//td[8]/text()")[0]),
@@ -150,13 +154,14 @@ class Api:
     ) -> TorrentComment:
         return TorrentComment(
             torrent_id=torrent_id,
-            comment_date=datetime.datetime(
+            comment_date=datetime(
                 *humanfriendly.parse_date(
                     row.xpath(
                         './/div[contains(@class, "comment-details")]'
                         "//small/text()"
                     )[0]
-                )
+                ),
+                tzinfo=timezone.utc,
             ),
             author_name=row.xpath('.//a[contains(@href, "/user/")]/text()')[0],
             author_avatar_url=row.xpath('.//img[@class="avatar"]/@src')[0],
