@@ -1,13 +1,12 @@
 import hashlib
 import json
-import tempfile
+import subprocess
 import typing as T
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import dateutil.parser
-import paramiko
 import requests
 import sshtunnel
 import transmissionrpc
@@ -83,14 +82,12 @@ class Api:
         )
 
     def list_guestbook_comments(self) -> T.Iterable[GuestbookComment]:
-        ssh_client = paramiko.SSHClient()
-        ssh_client.load_system_host_keys()
-        ssh_client.connect(DEDIBOX_HOST)
-        sftp_client = ssh_client.open_sftp()
-        with sftp_client.open("srv/website/data/comments.json") as handle:
-            content = handle.read()
-        sftp_client.close()
-        ssh_client.close()
+        content = subprocess.run(
+            ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/comments.json"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
 
         items = json.loads(content)
         for item in items:
