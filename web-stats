@@ -47,10 +47,10 @@ class ContextBuilder:
         self.cached_context = cached_context
 
     def build(self) -> Context:
-        anidex_torrents = self.build_anidex_output()
-        neocities_stats = self.build_neocities_output()
         guestbook_comments, dedibox_torrent_stats = self.build_dedibox_output()
+        neocities_stats = self.build_neocities_output()
         nyaa_si_torrents, nyaa_si_comments = self.build_nyaa_si_output()
+        anidex_torrents = self.build_anidex_output()
 
         return Context(
             neocities_stats=neocities_stats,
