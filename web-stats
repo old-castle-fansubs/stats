@@ -113,20 +113,24 @@ class ContextBuilder:
         return torrents, comments
 
     def build_anidex_output(self) -> T.List[anidex.Torrent]:
-        api = anidex.Api()
-        print(f"Logging into anidex.info…", file=sys.stderr)
-        api.login(self.args.anidex_user, self.args.anidex_pass)
+        try:
+            api = anidex.Api()
+            print(f"Logging into anidex.info…", file=sys.stderr)
+            api.login(self.args.anidex_user, self.args.anidex_pass)
 
-        def page_callback(offset: int) -> None:
-            print(
-                f"Getting anidex.info torrent list… (offset {offset})",
-                file=sys.stderr,
+            def page_callback(offset: int) -> None:
+                print(
+                    f"Getting anidex.info torrent list… (offset {offset})",
+                    file=sys.stderr,
+                )
+
+            print(f"Getting anidex.info torrent list…", file=sys.stderr)
+            return list(
+                api.list_group_torrents(self.args.anidex_group, page_callback)
             )
-
-        print(f"Getting anidex.info torrent list…", file=sys.stderr)
-        return list(
-            api.list_group_torrents(self.args.anidex_group, page_callback)
-        )
+        except anidex.api.ApiError as ex:
+            print(ex)
+            return []
 
 
 @dataclass
