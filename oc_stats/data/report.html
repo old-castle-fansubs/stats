@@ -201,21 +201,21 @@
           <tbody>
             <tr>
               <td>Uptime</td>
-              <td class='text-center'>{{ dedibox_torrent_stats.uptime }}</td>
+              <td class='text-center'>{{ torrent_stats.uptime }}</td>
             </tr>
             <tr>
               <td>Uploaded</td>
-              <td class='text-center'>{{ dedibox_torrent_stats.uploaded_bytes|filesizeformat }}</td>
+              <td class='text-center'>{{ torrent_stats.uploaded_bytes|filesizeformat }}</td>
             </tr>
             <tr>
               <td>Downloaded</td>
-              <td class='text-center'>{{ dedibox_torrent_stats.downloaded_bytes|filesizeformat }}</td>
+              <td class='text-center'>{{ torrent_stats.downloaded_bytes|filesizeformat }}</td>
             </tr>
           </tbody>
           <tbody>
             <tr>
               <td>Torrents</td>
-              <td class='text-center'>{{ dedibox_torrent_stats.torrents }} (active: {{ dedibox_torrent_stats.active_torrents }})</td>
+              <td class='text-center'>{{ torrent_stats.torrents }} (active: {{ torrent_stats.active_torrents }})</td>
             </tr>
           </tbody>
         </table>

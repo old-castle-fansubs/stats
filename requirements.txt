@@ -1,3 +1,4 @@
 humanfriendly
 lxml
 requests
+dataclasses-json

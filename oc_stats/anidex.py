@@ -5,100 +5,70 @@ from dataclasses import dataclass
 import humanfriendly
 import lxml.html
 import requests
+from dataclasses_json import dataclass_json
+
+from oc_stats.common import BaseTorrent
 
 
+@dataclass_json
 @dataclass
-class Torrent:
-    torrent_id: int
-    name: str
-    magnet_link: str
-    size: int
-    upload_date: datetime.datetime
-    seeder_count: int
-    leecher_count: int
-    download_count: int
-    comment_count: int
-    like_count: int
-    visible: bool
-
-    @property
-    def torrent_link(self) -> str:
-        return f"https://anidex.info/dl/{self.torrent_id}"
+class Torrent(BaseTorrent):
+    like_count: int = 0
 
 
-class ApiError(RuntimeError):
-    pass
+def list_group_torrents(
+    user_name: str,
+    password: str,
+    group_id: int,
+    page_callback: T.Optional[T.Callable[[int], None]],
+) -> T.Iterable[Torrent]:
+    session = requests.Session()
 
+    response = session.post(
+        "https://anidex.info/ajax/actions.ajax.php?function=login",
+        headers={"x-requested-with": "XMLHttpRequest"},
+        data={"login_username": user_name, "login_password": password},
+    )
+    response.raise_for_status()
 
-class GroupNotFound(ApiError):
-    def __init__(self, group_id: int) -> None:
-        super().__init__(f'group "{group_id}" was not found')
+    offset = 0
+    while True:
+        if page_callback:
+            page_callback(offset)
 
-
-class InvalidAuth(ApiError):
-    pass
-
-
-class UnexpectedHttpCode(ApiError):
-    def __init__(self, code: int) -> None:
-        super().__init__(f'unexpected status code "{code}"')
-
-
-class Api:
-    def __init__(self) -> None:
-        self.session = requests.Session()
-
-    def login(self, user_name: str, password: str) -> None:
-        self.session = requests.Session()
-
-        response = self.session.post(
-            "https://anidex.info/ajax/actions.ajax.php?function=login",
-            headers={"x-requested-with": "XMLHttpRequest"},
-            data={"login_username": user_name, "login_password": password},
+        response = session.get(
+            f"https://anidex.info/?page=group&id={group_id}&offset={offset}"
         )
-        if response.status_code != 200:
-            raise UnexpectedHttpCode(response.status_code)
+        response.raise_for_status()
 
-    def list_group_torrents(
-        self, group_id: int, page_callback: T.Optional[T.Callable[[int], None]]
-    ) -> T.Iterable[Torrent]:
-        offset = 0
-        while True:
-            if page_callback:
-                page_callback(offset)
+        tree = lxml.html.fromstring(response.content)
+        done = 0
+        for row in tree.xpath("//table/tbody/tr"):
+            yield _make_torrent(row)
+            done += 1
 
-            response = self.session.get(
-                f"https://anidex.info/?page=group&id={group_id}&offset={offset}"
-            )
+        if not done:
+            break
+        offset += done
 
-            if response.status_code == 404:
-                raise GroupNotFound(group_id)
-            if response.status_code != 200:
-                raise UnexpectedHttpCode(response.status_code)
 
-            tree = lxml.html.fromstring(response.content)
-            done = 0
-            for row in tree.xpath("//table/tbody/tr"):
-                yield self._make_torrent(row)
-                done += 1
+def _make_torrent(row: lxml.html.HtmlElement) -> Torrent:
+    torrent_id = int(row.xpath(".//td[3]/a/@id")[0])
 
-            if not done:
-                break
-            offset += done
-
-    def _make_torrent(self, row: lxml.html.HtmlElement) -> Torrent:
-        return Torrent(
-            torrent_id=int(row.xpath(".//td[3]/a/@id")[0]),
-            name=row.xpath(".//td[3]//span/@title")[0],
-            magnet_link=row.xpath('.//a[contains(@href, "magnet")]/@href')[0],
-            size=humanfriendly.parse_size(row.xpath(".//td[7]/text()")[0]),
-            upload_date=datetime.datetime(
-                *humanfriendly.parse_date(row.xpath(".//td[8]/@title")[0])
-            ),
-            seeder_count=int(row.xpath(".//td[9]/text()")[0]),
-            leecher_count=int(row.xpath(".//td[10]/text()")[0]),
-            download_count=int(row.xpath(".//td[11]/text()")[0]),
-            like_count=int((row.xpath("./td[4]/span/text()") + ["+0"])[0][1:]),
-            comment_count=0,
-            visible=len(row.xpath('.//span[@title="Hidden"]')) == 0,
-        )
+    return Torrent(
+        source="anidex.info",
+        torrent_id=torrent_id,
+        name=row.xpath(".//td[3]//span/@title")[0],
+        torrent_link=f"https://anidex.info/dl/{torrent_id}",
+        magnet_link=row.xpath('.//a[contains(@href, "magnet")]/@href')[0],
+        size=humanfriendly.parse_size(row.xpath(".//td[7]/text()")[0]),
+        upload_date=datetime.datetime(
+            *humanfriendly.parse_date(row.xpath(".//td[8]/@title")[0])
+        ),
+        seeder_count=int(row.xpath(".//td[9]/text()")[0]),
+        leecher_count=int(row.xpath(".//td[10]/text()")[0]),
+        download_count=int(row.xpath(".//td[11]/text()")[0]),
+        like_count=int((row.xpath("./td[4]/span/text()") + ["+0"])[0][1:]),
+        comment_count=0,
+        visible=len(row.xpath('.//span[@title="Hidden"]')) == 0,
+    )

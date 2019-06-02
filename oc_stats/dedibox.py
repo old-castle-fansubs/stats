@@ -1,112 +1,94 @@
+import dataclasses
 import hashlib
 import json
 import subprocess
 import typing as T
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
+from datetime import timedelta
 
 import dateutil.parser
-import requests
 import sshtunnel
 import transmissionrpc
+from dataclasses_json import dataclass_json
+
+from .common import AuthError, BaseComment
 
 DEDIBOX_HOST = "oldcastle.moe"
 DEDIBOX_PORT = 22
 
 
-class ApiError(RuntimeError):
-    pass
+@dataclass_json
+@dataclasses.dataclass
+class Comment(BaseComment):
+    like_count: int
 
 
-class NotLoggedIn(ApiError):
-    def __init__(self) -> None:
-        super().__init__("not logged in")
-
-
-class InvalidAuth(ApiError):
-    def __init__(self) -> None:
-        super().__init__("invalid credentials")
-
-
-@dataclass
+@dataclass_json
+@dataclasses.dataclass
 class TorrentStats:
     torrents: int
     active_torrents: int
     downloaded_bytes: int
     uploaded_bytes: int
-    uptime: timedelta
+    uptime: timedelta = dataclasses.field(
+        metadata={
+            "dataclasses_json": {
+                "encoder": lambda t: t.total_seconds(),
+                "decoder": lambda t: timedelta(seconds=t),
+            }
+        }
+    )
 
 
-@dataclass
-class GuestbookComment:
-    id: int
-    parent_id: T.Optional[int]
-    comment_date: datetime
-    author_name: str
-    author_avatar_url: str
-    author_email: T.Optional[str]
-    author_website: T.Optional[str]
-    text: str
-    likes: int
+def get_torrent_stats(user_name: str, password: str) -> TorrentStats:
+    transmission_tunnel = sshtunnel.SSHTunnelForwarder(
+        (DEDIBOX_HOST, 22),
+        ssh_username=user_name,
+        ssh_password=password,
+        remote_bind_address=("127.0.0.1", 9091),
+    )
+    transmission_tunnel.start()
+    transmission = transmissionrpc.Client(
+        "127.0.0.1", port=transmission_tunnel.local_bind_port
+    )
+
+    if transmission is None:
+        raise NotLoggedIn
+
+    stats = transmission.session_stats()
+
+    ret = TorrentStats(
+        torrents=stats.torrentCount,
+        active_torrents=stats.activeTorrentCount,
+        downloaded_bytes=stats.cumulative_stats["downloadedBytes"],
+        uploaded_bytes=stats.cumulative_stats["uploadedBytes"],
+        uptime=timedelta(seconds=stats.cumulative_stats["secondsActive"]),
+    )
+
+    transmission_tunnel.close()
+
+    return ret
 
 
-class Api:
-    def __init__(self) -> None:
-        self.transmission_tunnel = None
-        self.transmission = None
+def list_guestbook_comments() -> T.Iterable[Comment]:
+    content = subprocess.run(
+        ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/comments.json"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
 
-    def login(self, user_name: str, password: str) -> None:
-        self.transmission_tunnel = sshtunnel.SSHTunnelForwarder(
-            (DEDIBOX_HOST, 22),
-            ssh_username=user_name,
-            ssh_password=password,
-            remote_bind_address=("127.0.0.1", 9091),
+    items = json.loads(content)
+    for item in items:
+        chksum = hashlib.md5(
+            (item["email"] or item["author"]).encode()
+        ).hexdigest()
+        avatar_url = f"https://www.gravatar.com/avatar/{chksum}?d=retro"
+        yield Comment(
+            source="guestbook",
+            comment_date=dateutil.parser.parse(item["created"]),
+            author_name=item["author"],
+            author_avatar_url=avatar_url,
+            text=item["text"],
+            torrent_id=None,
+            like_count=item["likes"],
         )
-        self.transmission_tunnel.start()
-        self.transmission = transmissionrpc.Client(
-            "127.0.0.1", port=self.transmission_tunnel.local_bind_port
-        )
-
-    def get_torrent_stats(self) -> TorrentStats:
-        if self.transmission is None:
-            raise NotLoggedIn
-
-        stats = self.transmission.session_stats().cumulative_stats
-        return TorrentStats(
-            torrents=self.transmission.session_stats().torrentCount,
-            active_torrents=self.transmission.session_stats().activeTorrentCount,
-            downloaded_bytes=stats["downloadedBytes"],
-            uploaded_bytes=stats["uploadedBytes"],
-            uptime=timedelta(seconds=stats["secondsActive"]),
-        )
-
-    def list_guestbook_comments(self) -> T.Iterable[GuestbookComment]:
-        content = subprocess.run(
-            ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/comments.json"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout
-
-        items = json.loads(content)
-        for item in items:
-            chksum = hashlib.md5(
-                (item["email"] or item["author"]).encode()
-            ).hexdigest()
-            avatar_url = f"https://www.gravatar.com/avatar/{chksum}?d=retro"
-            yield GuestbookComment(
-                id=item["id"],
-                parent_id=item["pid"],
-                comment_date=dateutil.parser.parse(item["created"]),
-                author_name=item["author"],
-                author_avatar_url=avatar_url,
-                author_email=item["email"],
-                author_website=item["website"],
-                text=item["text"],
-                likes=item["likes"],
-            )
-
-    def __del__(self) -> None:
-        if self.transmission_tunnel is not None:
-            self.transmission_tunnel.close()
