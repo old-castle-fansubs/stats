@@ -51,7 +51,7 @@ def refresh_data(
             yield
 
     if not args.dev or not data.neocities_traffic_stats:
-        print("Grabbing neocities traffic stats…", file=sys.stderr)
+        print("Getting neocities traffic stats…", file=sys.stderr)
         with exception_guard():
             data.neocities_traffic_stats = list(
                 neocities.get_traffic_stats(
@@ -61,7 +61,7 @@ def refresh_data(
             yield
 
     if not args.dev or not data.nyaa_si_torrents:
-        print("Grabbing nyaa torrents…", file=sys.stderr)
+        print("Getting nyaa torrents…", file=sys.stderr)
         with exception_guard():
             data.nyaa_si_torrents = list(
                 nyaa_si.list_user_torrents(args.nyaasi_user, args.nyaasi_pass)
@@ -69,7 +69,7 @@ def refresh_data(
             yield
 
     if not args.dev or not data.nyaa_si_comments:
-        print("Grabbing nyaa comments…", file=sys.stderr)
+        print("Getting nyaa comments…", file=sys.stderr)
         if not data.nyaa_si_comments:
             data.nyaa_si_comments = {}
         for torrent in data.nyaa_si_torrents:
@@ -78,7 +78,7 @@ def refresh_data(
             )
             if comment_count != torrent.comment_count:
                 print(
-                    f"Grabbing nyaa comments for {torrent.name}…",
+                    f"Getting nyaa comments for {torrent.name}…",
                     file=sys.stderr,
                 )
                 with exception_guard():
@@ -88,7 +88,7 @@ def refresh_data(
                     yield
 
     if not args.dev or not data.anidex_torrents:
-        print("Grabbing anidex torrents…", file=sys.stderr)
+        print("Getting anidex torrents…", file=sys.stderr)
 
         def page_callback(offset: int) -> None:
             print(
