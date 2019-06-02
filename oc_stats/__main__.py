@@ -12,10 +12,7 @@ import jinja2
 import markdown
 import xdg
 
-import anidex
-import dedibox
-import neocities
-import nyaa_si
+from . import anidex, dedibox, neocities, nyaa_si
 
 CACHE_PATH = Path(xdg.XDG_CACHE_HOME) / "oc-web-stats.dat"
 ROOT_PATH = Path(__file__).parent
