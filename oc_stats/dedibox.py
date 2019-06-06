@@ -3,7 +3,7 @@ import hashlib
 import json
 import subprocess
 import typing as T
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import dateutil.parser
 import sshtunnel
@@ -37,6 +37,26 @@ class TorrentStats:
             }
         }
     )
+
+
+@dataclass_json
+@dataclasses.dataclass
+class TorrentRequest:
+    date: T.Optional[datetime] = dataclasses.field(
+        metadata={
+            "dataclasses_json": {
+                "encoder": lambda x: datetime.isoformat(x)
+                if x is not None
+                else None,
+                "decoder": lambda x: datetime.fromisoformat(x)
+                if x is not None
+                else None,
+            }
+        }
+    )
+    title: str
+    anidb_link: str
+    comment: T.Optional[str]
 
 
 def get_torrent_stats(user_name: str, password: str) -> TorrentStats:
@@ -91,4 +111,22 @@ def list_guestbook_comments() -> T.Iterable[Comment]:
             text=item["text"],
             torrent_id=None,
             like_count=item["likes"],
+        )
+
+
+def list_torrent_requests() -> T.Iterable[TorrentRequest]:
+    content = subprocess.run(
+        ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/requests.json"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+
+    items = json.loads(content)
+    for item in items:
+        yield TorrentRequest(
+            date=dateutil.parser.parse(item["date"]) if item["date"] else None,
+            title=item["title"],
+            anidb_link=item["anidb_link"],
+            comment=item["comment"],
         )

@@ -99,6 +99,15 @@
       position: absolute;
       margin-left: calc(-1 * var(--avatar-size) - var(--avatar-pad));
     }
+
+    .requests {
+      list-style-type: outside;
+      padding: 0;
+      font-size: smaller;
+    }
+    .requests p:last-child {
+      margin-bottom: 0;
+    }
   </style>
 </head>
 <body>
@@ -219,6 +228,22 @@
             </tr>
           </tbody>
         </table>
+
+        <h2>Recent requests</h2>
+        <ul class='requests'>
+          {% for request in torrent_requests|reverse %}
+            <li>
+              <a href="{{ request.anidb_link }}">{{ request.title }}</a>
+              {% if request.date %}
+                <small>({{ request.date.strftime('%Y-%m-%d') }})</small>
+              {% endif %}
+
+              {% if request.comment %}
+                {{ request.comment|markdown }}
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
       </div>
 
       <div class='col-md-8 col-12'>

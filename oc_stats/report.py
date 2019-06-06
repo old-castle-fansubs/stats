@@ -91,6 +91,7 @@ class ReportContext:
     date: datetime.datetime
     comments: T.List[ReportComment]
     torrent_stats: dedibox.TorrentStats
+    torrent_requests: T.List[dedibox.TorrentRequest]
     traffic_stats: T.List[ReportTrafficStat]
     torrents: T.List[ReportTorrent]
 
@@ -100,7 +101,6 @@ def build_report_context(data: T.Any) -> ReportContext:
         ReportComment.build_from(comment)
         for comment in data.guestbook_comments
     ]
-    torrent_stats = data.torrent_stats
     torrents = {
         (torrent.source, torrent.torrent_id): ReportTorrent.build_from(torrent)
         for torrent in data.anidex_torrents + data.nyaa_si_torrents
@@ -134,7 +134,8 @@ def build_report_context(data: T.Any) -> ReportContext:
         date=datetime.datetime.now(),
         comments=comments,
         torrents=list(torrents.values()),
-        torrent_stats=torrent_stats,
+        torrent_stats=data.torrent_stats,
+        torrent_requests=data.torrent_requests,
         traffic_stats=traffic_stats,
     )
 

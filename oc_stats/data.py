@@ -19,6 +19,7 @@ DATA_PATH = ROOT_PATH.parent / "cache.json"
 class Data:
     guestbook_comments: T.List[dedibox.Comment]
     torrent_stats: T.Optional[dedibox.TorrentStats]
+    torrent_requests: T.List[dedibox.TorrentRequest]
     neocities_traffic_stats: T.List[neocities.TrafficStat]
     nyaa_si_torrents: T.List[nyaa_si.Torrent]
     nyaa_si_comments: T.Dict[int, T.List[nyaa_si.Comment]]
@@ -40,6 +41,12 @@ def refresh_data(
         print("Getting guest book comment list…", file=sys.stderr)
         with exception_guard():
             data.guestbook_comments = list(dedibox.list_guestbook_comments())
+            yield
+
+    if not args.dev or not data.torrent_requests:
+        print("Getting request list…", file=sys.stderr)
+        with exception_guard():
+            data.torrent_requests = list(dedibox.list_torrent_requests())
             yield
 
     if not args.dev or not data.torrent_stats:
