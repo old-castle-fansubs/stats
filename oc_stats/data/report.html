@@ -289,10 +289,14 @@
                   {{ comment.comment_date.strftime('%Y-%m-%d %H:%M') }}
                   on
                   {{ comment.source }}
-                  {% if comment.torrent %}
-                    (<a href='{{ comment.torrent.website_link }}'><!--
-                      -->{{ comment.torrent.name }}<!--
-                    --></a>)
+                  {% if comment.website_link %}
+                    (<a href='{{ comment.website_link }}'>
+                      {%- if comment.website_title -%}
+                        {{- comment.website_title -}}
+                      {%- else -%}
+                        link
+                      {%- endif -%}
+                    </a>)
                   {% endif %}
                 </small>
               </li>

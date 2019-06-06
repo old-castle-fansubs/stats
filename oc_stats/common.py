@@ -30,7 +30,8 @@ class BaseComment:
     author_name: str
     author_avatar_url: T.Optional[str]
     text: str
-    torrent_id: T.Optional[int]
+    website_title: T.Optional[str] = None
+    website_link: T.Optional[str] = None
 
 
 class AuthError(RuntimeError):

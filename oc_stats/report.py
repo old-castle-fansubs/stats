@@ -63,8 +63,6 @@ class ReportTorrent(BaseTorrent):
 
 @dataclasses.dataclass
 class ReportComment(BaseComment):
-    torrent: T.Optional[ReportTorrent] = None
-
     @classmethod
     def build_from(cls: T.Any, other: T.Any, **kwargs: T.Any) -> T.Any:
         return cls(
@@ -73,7 +71,8 @@ class ReportComment(BaseComment):
             author_name=other.author_name,
             author_avatar_url=other.author_avatar_url,
             text=other.text,
-            torrent_id=other.torrent_id,
+            website_link=kwargs.pop('website_link', None) or other.website_link,
+            website_title=kwargs.pop('website_title', None) or other.website_title,
             **kwargs,
         )
 
@@ -109,10 +108,12 @@ def build_report_context(data: T.Any) -> ReportContext:
 
     for torrent_id, nyaa_si_comments in data.nyaa_si_comments.items():
         for nyaa_si_comment in nyaa_si_comments:
+            torrent = torrents.get(("nyaa.si", torrent_id))
             comments.append(
                 ReportComment.build_from(
                     nyaa_si_comment,
-                    torrent=torrents.get(("nyaa.si", torrent_id)),
+                    website_title=torrent.name,
+                    website_link=torrent.website_link,
                 )
             )
 

@@ -19,7 +19,7 @@ DEDIBOX_PORT = 22
 @dataclass_json
 @dataclasses.dataclass
 class Comment(BaseComment):
-    like_count: int
+    like_count: int = 0
 
 
 @dataclass_json
@@ -105,11 +105,11 @@ def list_guestbook_comments() -> T.Iterable[Comment]:
         avatar_url = f"https://www.gravatar.com/avatar/{chksum}?d=retro"
         yield Comment(
             source="guestbook",
+            website_link=f"https://oldcastle.moe/guest_book.html#comment-{item['id']}",
             comment_date=dateutil.parser.parse(item["created"]),
             author_name=item["author"],
             author_avatar_url=avatar_url,
             text=item["text"],
-            torrent_id=None,
             like_count=item["likes"],
         )
 

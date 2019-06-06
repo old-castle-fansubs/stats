@@ -22,7 +22,7 @@ class Torrent(BaseTorrent):
 @dataclass_json
 @dataclass
 class Comment(BaseComment):
-    pass
+    torrent_id: T.Optional[int] = None
 
 
 def list_user_torrents(user_name: str, password: str) -> T.Iterable[Torrent]:
