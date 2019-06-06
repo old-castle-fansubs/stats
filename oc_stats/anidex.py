@@ -59,6 +59,7 @@ def _make_torrent(row: lxml.html.HtmlElement) -> Torrent:
         source="anidex.info",
         torrent_id=torrent_id,
         name=row.xpath(".//td[3]//span/@title")[0],
+        website_link=f"https://anidex.info/torrent/{torrent_id}",
         torrent_link=f"https://anidex.info/dl/{torrent_id}",
         magnet_link=row.xpath('.//a[contains(@href, "magnet")]/@href')[0],
         size=humanfriendly.parse_size(row.xpath(".//td[7]/text()")[0]),

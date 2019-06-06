@@ -10,6 +10,7 @@ ROOT_PATH = Path(__file__).parent
 class BaseTorrent:
     source: str
     torrent_id: int
+    website_link: str
     torrent_link: str
     magnet_link: T.Optional[str]
     name: str

@@ -87,6 +87,7 @@ def _make_torrent(row: lxml.html.HtmlElement) -> Torrent:
         source="nyaa.si",
         torrent_id=torrent_id,
         name=row.xpath('.//td[2]/a[not(@class="comments")]/@title')[0],
+        website_link=f"https://nyaa.si/view/{torrent_id}",
         torrent_link=f"https://nyaa.si/download/{torrent_id}.torrent",
         magnet_link=row.xpath('.//a[contains(@href, "magnet")]/@href')[0],
         size=humanfriendly.parse_size(row.xpath(".//td[4]/text()")[0]),

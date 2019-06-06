@@ -46,6 +46,7 @@ class ReportTorrent(BaseTorrent):
         return cls(
             source=other.source,
             torrent_id=other.torrent_id,
+            website_link=other.website_link,
             torrent_link=other.torrent_link,
             magnet_link=other.magnet_link,
             name=other.name,
