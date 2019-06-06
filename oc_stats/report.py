@@ -8,12 +8,24 @@ import typing as T
 import configargparse
 import jinja2
 import markdown
+import numpy as np
 import xdg
 
 from oc_stats.common import ROOT_PATH, BaseComment, BaseTorrent
 from oc_stats.data import Data
 
 from . import anidex, dedibox, neocities, nyaa_si
+
+
+def smooth(source: np.array) -> np.array:
+    window_len = 45
+    x = np.array(source)
+    s = np.r_[
+        2 * x[0] - x[window_len - 1 :: -1], x, 2 * x[-1] - x[-1:-window_len:-1]
+    ]
+    window = np.hamming(window_len)
+    y = np.convolve(window / window.sum(), s, mode="same")
+    return y[window_len : -window_len + 1]
 
 
 def json_default(obj: T.Any) -> T.Any:
@@ -103,83 +115,18 @@ def build_report_context(data: T.Any) -> ReportContext:
                 )
             )
 
+    hits_avg = smooth([stat.hits for stat in data.neocities_traffic_stats])
+    views_avg = smooth([stat.views for stat in data.neocities_traffic_stats])
+
     traffic_stats: T.List[ReportTrafficStat] = []
-    try:
-        import scipy.signal
-
-        weights = {
-            key - 21: value
-            for key, value in enumerate(
-                scipy.signal.gaussian(M=21 * 2 + 1, std=7)
-            )
-        }
-    except ImportError:
-        weights = {
-            -21: 0.011_108,
-            -20: 0.016_879,
-            -19: 0.025_130,
-            -18: 0.036_658,
-            -17: 0.052_393,
-            -16: 0.073_369,
-            -15: 0.100_668,
-            -14: 0.135_335,
-            -13: 0.178_263,
-            -12: 0.230_066,
-            -11: 0.290_923,
-            -10: 0.360_447,
-            -9: 0.437_564,
-            -8: 0.520_450,
-            -7: 0.606_530,
-            -6: 0.692_569,
-            -5: 0.774_837,
-            -4: 0.849_365,
-            -3: 0.912_254,
-            -2: 0.960_005,
-            -1: 0.989_847,
-            0: 1.0,
-            1: 0.989_847,
-            2: 0.960_005,
-            3: 0.912_254,
-            4: 0.849_365,
-            5: 0.774_837,
-            6: 0.692_569,
-            7: 0.606_530,
-            8: 0.520_450,
-            9: 0.437_564,
-            10: 0.360_447,
-            11: 0.290_923,
-            12: 0.230_066,
-            13: 0.178_263,
-            14: 0.135_335,
-            15: 0.100_668,
-            16: 0.073_369,
-            17: 0.052_393,
-            18: 0.036_658,
-            19: 0.025_130,
-            20: 0.016_879,
-            21: 0.011_108,
-        }
-
     for i, item in enumerate(data.neocities_traffic_stats):
-        total_weight = 0
-        hits_avg = 0
-        views_avg = 0
-        for delta, weight in weights.items():
-            try:
-                other_item = data.neocities_traffic_stats[i + delta]
-            except LookupError:
-                continue
-            hits_avg += other_item.hits * weight
-            views_avg += other_item.views * weight
-            total_weight += weight
-
         traffic_stats.append(
             ReportTrafficStat(
                 day=item.day,
                 hits=item.hits,
                 views=item.views,
-                hits_avg=hits_avg / max(1, total_weight),
-                views_avg=views_avg / max(1, total_weight),
+                hits_avg=hits_avg[i],
+                views_avg=views_avg[i],
             )
         )
 
