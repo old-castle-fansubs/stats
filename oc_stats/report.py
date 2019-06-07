@@ -41,7 +41,6 @@ def json_default(obj: T.Any) -> T.Any:
         return obj.isoformat()
     if isinstance(obj, (datetime.datetime, datetime.timedelta)):
         return str(obj)
-    print(obj, type(obj))
     return None
 
 

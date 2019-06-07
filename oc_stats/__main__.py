@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import logging
 import pickle
 import typing as T
 from pathlib import Path
@@ -34,6 +35,7 @@ def parse_args() -> configargparse.Namespace:
 
 
 def main() -> None:
+    logging.basicConfig()
     args = parse_args()
 
     if DATA_PATH.exists():
