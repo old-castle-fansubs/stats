@@ -67,24 +67,6 @@ class ReportTorrent(BaseTorrent):
 
 
 @dataclasses.dataclass
-class ReportComment(BaseComment):
-    @classmethod
-    def build_from(cls: T.Any, other: T.Any, **kwargs: T.Any) -> T.Any:
-        return cls(
-            source=other.source,
-            comment_date=other.comment_date,
-            author_name=other.author_name,
-            author_avatar_url=other.author_avatar_url,
-            text=other.text,
-            website_link=kwargs.pop("website_link", None)
-            or other.website_link,
-            website_title=kwargs.pop("website_title", None)
-            or other.website_title,
-            **kwargs,
-        )
-
-
-@dataclasses.dataclass
 class ReportTrafficStat(BaseTrafficStat):
     views: int
     hits_avg: float
@@ -94,7 +76,7 @@ class ReportTrafficStat(BaseTrafficStat):
 @dataclasses.dataclass
 class ReportContext:
     date: datetime.datetime
-    comments: T.List[ReportComment]
+    comments: T.List[BaseComment]
     torrent_stats: dedibox.TorrentStats
     torrent_requests: T.List[dedibox.TorrentRequest]
     traffic_stats: T.List[ReportTrafficStat]
@@ -102,10 +84,7 @@ class ReportContext:
 
 
 def build_report_context(data: T.Any) -> ReportContext:
-    comments = [
-        ReportComment.build_from(comment)
-        for comment in data.guestbook_comments
-    ]
+    comments = list(data.guestbook_comments)
     torrents = {
         (torrent.source, torrent.torrent_id): ReportTorrent.build_from(torrent)
         for torrent in data.anidex_torrents + data.nyaa_si_torrents
@@ -114,13 +93,7 @@ def build_report_context(data: T.Any) -> ReportContext:
     for torrent_id, nyaa_si_comments in data.nyaa_si_comments.items():
         for nyaa_si_comment in nyaa_si_comments:
             torrent = torrents.get(("nyaa.si", torrent_id))
-            comments.append(
-                ReportComment.build_from(
-                    nyaa_si_comment,
-                    website_title=torrent.name,
-                    website_link=torrent.website_link,
-                )
-            )
+            comments.append(nyaa_si_comment)
 
     min_day = min(
         stat.day

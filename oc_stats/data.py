@@ -96,7 +96,7 @@ def refresh_data(
                 logger.info(f"Getting nyaa comments for {torrent.name}…")
                 with exception_guard():
                     data.nyaa_si_comments[torrent.torrent_id] = list(
-                        nyaa_si.list_torrent_comments(torrent.torrent_id)
+                        nyaa_si.list_torrent_comments(torrent)
                     )
                     yield
 

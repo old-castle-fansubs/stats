@@ -10,19 +10,8 @@ import lxml.html
 import requests
 from dataclasses_json import dataclass_json
 
-from .common import BaseComment, BaseTorrent
-
-
-@dataclass_json
-@dataclass
-class Torrent(BaseTorrent):
-    pass
-
-
-@dataclass_json
-@dataclass
-class Comment(BaseComment):
-    torrent_id: T.Optional[int] = None
+from .common import BaseComment as Comment
+from .common import BaseTorrent as Torrent
 
 
 def list_user_torrents(user_name: str, password: str) -> T.Iterable[Torrent]:
@@ -67,15 +56,15 @@ def list_user_torrents(user_name: str, password: str) -> T.Iterable[Torrent]:
             break
 
 
-def list_torrent_comments(torrent_id: int) -> T.Iterable[Comment]:
-    response = requests.get(f"https://nyaa.si/view/{torrent_id}")
+def list_torrent_comments(torrent: Torrent) -> T.Iterable[Comment]:
+    response = requests.get(f"https://nyaa.si/view/{torrent.torrent_id}")
     response.raise_for_status()
 
     tree = lxml.html.fromstring(response.content)
     for row in tree.xpath(
         '//div[@id="comments"]//div[starts-with(@id, "com-")]'
     ):
-        yield _make_comment(torrent_id, row)
+        yield _make_comment(torrent, row)
 
 
 def _make_torrent(row: lxml.html.HtmlElement) -> Torrent:
@@ -105,10 +94,9 @@ def _make_torrent(row: lxml.html.HtmlElement) -> Torrent:
     )
 
 
-def _make_comment(torrent_id: int, row: lxml.html.HtmlElement) -> Comment:
+def _make_comment(torrent: Torrent, row: lxml.html.HtmlElement) -> Comment:
     return Comment(
         source="nyaa.si",
-        torrent_id=torrent_id,
         comment_date=datetime(
             *humanfriendly.parse_date(
                 row.xpath(
@@ -121,4 +109,7 @@ def _make_comment(torrent_id: int, row: lxml.html.HtmlElement) -> Comment:
         author_name=row.xpath('.//a[contains(@href, "/user/")]/text()')[0],
         author_avatar_url=row.xpath('.//img[@class="avatar"]/@src')[0],
         text=row.xpath(".//div[@markdown-text]/text()")[0],
+        website_title=torrent.name,
+        website_link=torrent.website_link
+        + row.xpath('.//a[contains(@href, "#com-")]/@href')[0],
     )
