@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import collections
 import dataclasses
 import datetime
 import json
@@ -11,7 +12,12 @@ import markdown
 import numpy as np
 import xdg
 
-from oc_stats.common import ROOT_PATH, BaseComment, BaseTorrent
+from oc_stats.common import (
+    ROOT_PATH,
+    BaseComment,
+    BaseTorrent,
+    BaseTrafficStat,
+)
 from oc_stats.data import Data
 
 from . import anidex, dedibox, neocities, nyaa_si
@@ -71,16 +77,16 @@ class ReportComment(BaseComment):
             author_name=other.author_name,
             author_avatar_url=other.author_avatar_url,
             text=other.text,
-            website_link=kwargs.pop('website_link', None) or other.website_link,
-            website_title=kwargs.pop('website_title', None) or other.website_title,
+            website_link=kwargs.pop("website_link", None)
+            or other.website_link,
+            website_title=kwargs.pop("website_title", None)
+            or other.website_title,
             **kwargs,
         )
 
 
 @dataclasses.dataclass
-class ReportTrafficStat:
-    day: datetime.datetime
-    hits: int
+class ReportTrafficStat(BaseTrafficStat):
     views: int
     hits_avg: float
     views_avg: float
@@ -117,20 +123,38 @@ def build_report_context(data: T.Any) -> ReportContext:
                 )
             )
 
-    hits_avg = smooth([stat.hits for stat in data.neocities_traffic_stats])
-    views_avg = smooth([stat.views for stat in data.neocities_traffic_stats])
+    min_day = min(
+        stat.day
+        for stat in data.neocities_traffic_stats + data.dedibox_traffic_stats
+    )
+    max_day = datetime.datetime.today().date()
+    days = (max_day - min_day).days + 1
 
-    traffic_stats: T.List[ReportTrafficStat] = []
-    for i, item in enumerate(data.neocities_traffic_stats):
-        traffic_stats.append(
-            ReportTrafficStat(
-                day=item.day,
-                hits=item.hits,
-                views=item.views,
-                hits_avg=hits_avg[i],
-                views_avg=views_avg[i],
-            )
+    hits = [0] * days
+    views = [0] * days
+
+    for stat in data.neocities_traffic_stats:
+        idx = (stat.day - min_day).days
+        hits[idx] += stat.hits
+        views[idx] += stat.views
+
+    for stat in data.dedibox_traffic_stats:
+        idx = (stat.day - min_day).days
+        hits[idx] += stat.hits
+
+    hits_avg = smooth(hits)
+    views_avg = smooth(views)
+
+    traffic_stats = [
+        ReportTrafficStat(
+            day=min_day + datetime.timedelta(days=i),
+            hits=hits[i],
+            views=views[i],
+            hits_avg=hits_avg[i],
+            views_avg=views_avg[i],
         )
+        for i in range(days)
+    ]
 
     return ReportContext(
         date=datetime.datetime.now(),

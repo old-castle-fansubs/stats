@@ -8,19 +8,12 @@ import lxml.html
 import requests
 from dataclasses_json import dataclass_json
 
+from .common import BaseTrafficStat
+
 
 @dataclass_json
 @dataclasses.dataclass
-class TrafficStat:
-    day: datetime.date = dataclasses.field(
-        metadata={
-            "dataclasses_json": {
-                "encoder": datetime.date.isoformat,
-                "decoder": datetime.date.fromisoformat,
-            }
-        }
-    )
-    hits: int
+class TrafficStat(BaseTrafficStat):
     views: int
     comments: int
     follows: int

@@ -21,6 +21,7 @@ class Data:
     torrent_stats: T.Optional[dedibox.TorrentStats]
     torrent_requests: T.List[dedibox.TorrentRequest]
     neocities_traffic_stats: T.List[neocities.TrafficStat]
+    dedibox_traffic_stats: T.List[dedibox.TrafficStat]
     nyaa_si_torrents: T.List[nyaa_si.Torrent]
     nyaa_si_comments: T.Dict[int, T.List[nyaa_si.Comment]]
     anidex_torrents: T.List[anidex.Torrent]
@@ -66,6 +67,11 @@ def refresh_data(
                 )
             )
             yield
+
+    if not args.dev or not data.dedibox_traffic_stats:
+        print("Getting website traffic stats…", file=sys.stderr)
+        data.dedibox_traffic_stats = list(dedibox.get_traffic_stats())
+        yield
 
     if not args.dev or not data.nyaa_si_torrents:
         print("Getting nyaa torrents…", file=sys.stderr)

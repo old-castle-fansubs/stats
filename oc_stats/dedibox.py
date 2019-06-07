@@ -1,6 +1,8 @@
+import collections
 import dataclasses
 import hashlib
 import json
+import re
 import subprocess
 import typing as T
 from datetime import datetime, timedelta
@@ -11,7 +13,18 @@ import transmissionrpc
 from dataclasses_json import dataclass_json
 
 from .common import AuthError, BaseComment
+from .common import BaseTrafficStat as TrafficStat
 
+NGINX_LOG_RE = re.compile(
+    r"(?P<ipaddress>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) "
+    r"- - "
+    r"\[(?P<time>\d{2}\/[A-Za-z]{3}\/\d{4}:\d{2}:\d{2}:\d{2} (\+|\-)\d{4})\] "
+    r'"(?P<request>[^"]*)" '
+    r"(?P<status>\d{3}) "
+    r"(?P<bytes_sent>\d+) "
+    r'("(?P<referer>(\-)|(.+))") '
+    r'("(?P<user_agent>.+)")'
+)
 DEDIBOX_HOST = "oldcastle.moe"
 DEDIBOX_PORT = 22
 
@@ -130,3 +143,51 @@ def list_torrent_requests() -> T.Iterable[TorrentRequest]:
             anidb_link=item["anidb_link"],
             comment=item["comment"],
         )
+
+
+def get_traffic_stats() -> T.Iterable[TrafficStat]:
+    process = subprocess.Popen(
+        [
+            "ssh",
+            DEDIBOX_HOST,
+            "sudo",
+            "gzip",
+            "--stdout",
+            "--decompress",
+            "--force",
+            "/var/log/nginx/*_oldcastle.moe.log*",
+        ],
+        text=True,
+        stdout=subprocess.PIPE,
+    )
+
+    visits: T.Dict[datetime.date, int] = collections.defaultdict(int)
+
+    while True:
+        line = process.stdout.readline()
+        line = line.rstrip()
+        if not line:
+            break
+
+        match = NGINX_LOG_RE.search(line)
+        if not match:
+            raise ValueError("Malformed line:", line)
+
+        request = match.group('request')
+        status = int(match.group("status"))
+
+        if '/stats.html' in request:
+            continue
+
+        if status in {400, 404}:
+            continue
+
+        if status in {200, 304}:
+            day = dateutil.parser.parse(
+                match.group("time").replace(":", " ", 1)
+            ).date()
+            visits[day] += 1
+
+    yield from (
+        TrafficStat(day=day, hits=hits) for day, hits in visits.items()
+    )

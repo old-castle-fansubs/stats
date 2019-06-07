@@ -1,12 +1,12 @@
+import dataclasses
 import datetime
 import typing as T
-from dataclasses import dataclass
 from pathlib import Path
 
 ROOT_PATH = Path(__file__).parent
 
 
-@dataclass
+@dataclasses.dataclass
 class BaseTorrent:
     source: str
     torrent_id: int
@@ -23,7 +23,7 @@ class BaseTorrent:
     visible: bool
 
 
-@dataclass
+@dataclasses.dataclass
 class BaseComment:
     source: str
     comment_date: datetime.datetime
@@ -37,3 +37,16 @@ class BaseComment:
 class AuthError(RuntimeError):
     def __init__(self) -> None:
         super().__init__("authentication error")
+
+
+@dataclasses.dataclass
+class BaseTrafficStat:
+    day: datetime.date = dataclasses.field(
+        metadata={
+            "dataclasses_json": {
+                "encoder": datetime.date.isoformat,
+                "decoder": datetime.date.fromisoformat,
+            }
+        }
+    )
+    hits: int
