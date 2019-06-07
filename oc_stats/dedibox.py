@@ -74,7 +74,7 @@ class TorrentRequest:
 
 def get_torrent_stats(user_name: str, password: str) -> TorrentStats:
     transmission_tunnel = sshtunnel.SSHTunnelForwarder(
-        (DEDIBOX_HOST, 22),
+        (DEDIBOX_HOST, DEDIBOX_PORT),
         ssh_username=user_name,
         ssh_password=password,
         remote_bind_address=("127.0.0.1", 9091),
@@ -85,7 +85,7 @@ def get_torrent_stats(user_name: str, password: str) -> TorrentStats:
     )
 
     if transmission is None:
-        raise NotLoggedIn
+        raise AuthError
 
     stats = transmission.session_stats()
 
@@ -173,10 +173,10 @@ def get_traffic_stats() -> T.Iterable[TrafficStat]:
         if not match:
             raise ValueError("Malformed line:", line)
 
-        request = match.group('request')
+        request = match.group("request")
         status = int(match.group("status"))
 
-        if '/stats.html' in request:
+        if "/stats.html" in request:
             continue
 
         if status in {400, 404}:

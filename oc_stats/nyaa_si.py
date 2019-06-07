@@ -1,14 +1,9 @@
 import datetime
-import json
 import typing as T
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from pathlib import Path
 
 import humanfriendly
 import lxml.html
 import requests
-from dataclasses_json import dataclass_json
 
 from .common import BaseComment as Comment
 from .common import BaseTorrent as Torrent
@@ -80,9 +75,9 @@ def _make_torrent(row: lxml.html.HtmlElement) -> Torrent:
         torrent_link=f"https://nyaa.si/download/{torrent_id}.torrent",
         magnet_link=row.xpath('.//a[contains(@href, "magnet")]/@href')[0],
         size=humanfriendly.parse_size(row.xpath(".//td[4]/text()")[0]),
-        upload_date=datetime(
+        upload_date=datetime.datetime(
             *humanfriendly.parse_date(row.xpath(".//td[5]/text()")[0]),
-            tzinfo=timezone.utc,
+            tzinfo=datetime.timezone.utc,
         ).replace(),
         seeder_count=int(row.xpath(".//td[6]/text()")[0]),
         leecher_count=int(row.xpath(".//td[7]/text()")[0]),
@@ -97,14 +92,14 @@ def _make_torrent(row: lxml.html.HtmlElement) -> Torrent:
 def _make_comment(torrent: Torrent, row: lxml.html.HtmlElement) -> Comment:
     return Comment(
         source="nyaa.si",
-        comment_date=datetime(
+        comment_date=datetime.datetime(
             *humanfriendly.parse_date(
                 row.xpath(
                     './/div[contains(@class, "comment-details")]'
                     "//small/text()"
                 )[0]
             ),
-            tzinfo=timezone.utc,
+            tzinfo=datetime.timezone.utc,
         ),
         author_name=row.xpath('.//a[contains(@href, "/user/")]/text()')[0],
         author_avatar_url=row.xpath('.//img[@class="avatar"]/@src')[0],

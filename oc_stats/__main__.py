@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 import logging
-import pickle
-import typing as T
 from pathlib import Path
 
 import configargparse

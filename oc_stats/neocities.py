@@ -1,6 +1,5 @@
 import csv
 import dataclasses
-import datetime
 import typing as T
 
 import dateutil.parser
