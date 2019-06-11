@@ -7,12 +7,16 @@ import typing as T
 
 import configargparse
 import jinja2
-import markdown
 import numpy as np
 
-from oc_stats.common import (ROOT_PATH, BaseComment, BaseTorrent,
-                             BaseTrafficStat)
+from oc_stats.common import (
+    ROOT_PATH,
+    BaseComment,
+    BaseTorrent,
+    BaseTrafficStat,
+)
 from oc_stats.data import Data
+from oc_stats.markdown import render_markdown
 
 from . import dedibox
 
@@ -120,11 +124,10 @@ def percent(
 
 def write_report(args: configargparse.Namespace, data: Data) -> None:
     print(f"Writing output to {args.output}…", file=sys.stderr)
-    md = markdown.Markdown(extensions=["meta"])
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(ROOT_PATH / "data"))
     )
-    env.filters["markdown"] = lambda text: jinja2.Markup(md.convert(text))
+    env.filters["markdown"] = lambda text: render_markdown(text)
     env.filters["tojson"] = lambda obj: json.dumps(obj, default=json_default)
     env.globals.update(percent=percent)
     args.output.parent.mkdir(parents=True, exist_ok=True)

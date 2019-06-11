@@ -2,3 +2,4 @@ humanfriendly
 lxml
 requests
 dataclasses-json
+misaka
