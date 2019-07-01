@@ -2,6 +2,7 @@ import collections
 import dataclasses
 import hashlib
 import json
+import os
 import re
 import subprocess
 import typing as T
@@ -27,6 +28,8 @@ NGINX_LOG_RE = re.compile(
 )
 DEDIBOX_HOST = "oldcastle.moe"
 DEDIBOX_PORT = 22
+DEDIBOX_USER = os.environ["DEDIBOX_USER"]
+DEDIBOX_PASS = os.environ["DEDIBOX_PASS"]
 
 
 @dataclass_json
@@ -72,11 +75,11 @@ class TorrentRequest:
     comment: T.Optional[str]
 
 
-def get_torrent_stats(user_name: str, password: str) -> TorrentStats:
+def get_torrent_stats() -> TorrentStats:
     transmission_tunnel = sshtunnel.SSHTunnelForwarder(
         (DEDIBOX_HOST, DEDIBOX_PORT),
-        ssh_username=user_name,
-        ssh_password=password,
+        ssh_username=DEDIBOX_USER,
+        ssh_password=DEDIBOX_PASS,
         remote_bind_address=("127.0.0.1", 9091),
     )
     transmission_tunnel.start()

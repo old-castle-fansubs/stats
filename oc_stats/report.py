@@ -4,8 +4,8 @@ import datetime
 import json
 import sys
 import typing as T
+from pathlib import Path
 
-import configargparse
 import jinja2
 import numpy as np
 
@@ -122,16 +122,16 @@ def percent(
     return f"{dividend / divisor:.2f}"
 
 
-def write_report(args: configargparse.Namespace, data: Data) -> None:
-    print(f"Writing output to {args.output}…", file=sys.stderr)
+def write_report(output: Path, data: Data) -> None:
+    print(f"Writing output to {output}…", file=sys.stderr)
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(ROOT_PATH / "data"))
     )
     env.filters["markdown"] = lambda text: render_markdown(text)
     env.filters["tojson"] = lambda obj: json.dumps(obj, default=json_default)
     env.globals.update(percent=percent)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
         env.get_template("report.html").render(
             **dataclasses.asdict(build_report_context(data))
         )

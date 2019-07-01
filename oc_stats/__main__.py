@@ -1,29 +1,17 @@
 #!/usr/bin/env python3
+import argparse
 import logging
 from pathlib import Path
-
-import configargparse
-import xdg
 
 from oc_stats.data import DATA_PATH, Data, refresh_data
 from oc_stats.report import write_report
 
 
-def parse_args() -> configargparse.Namespace:
-    parser = configargparse.ArgumentParser(
-        formatter_class=configargparse.RawTextHelpFormatter,
-        default_config_files=[str(Path(xdg.XDG_CONFIG_HOME) / "oc-tools.yml")],
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter
     )
 
-    parser.add_argument("--neocities-user", required=True)
-    parser.add_argument("--neocities-pass", required=True)
-    parser.add_argument("--dedibox-user", required=True)
-    parser.add_argument("--dedibox-pass", required=True)
-    parser.add_argument("--anidex-user", required=True)
-    parser.add_argument("--anidex-pass", required=True)
-    parser.add_argument("--anidex-group", type=int, required=True)
-    parser.add_argument("--nyaasi-user", required=True)
-    parser.add_argument("--nyaasi-pass", required=True)
     parser.add_argument("-d", "--dev", action="store_true")
     parser.add_argument(
         "-o", "--output", default=Path("stats.html"), type=Path, required=False
@@ -48,10 +36,10 @@ def main() -> None:
             nyaa_si_comments={},
         )
 
-    for _ in refresh_data(args, data):
+    for _ in refresh_data(data, args.dev):
         DATA_PATH.write_text(data.to_json(indent=4))
 
-    write_report(args, data)
+    write_report(args.output, data)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,6 @@ import dataclasses
 import logging
 import typing as T
 
-import configargparse
 from dataclasses_json import dataclass_json
 
 from oc_stats.common import ROOT_PATH
@@ -37,53 +36,43 @@ def exception_guard() -> T.Generator:
         logger.exception(ex)
 
 
-def refresh_data(
-    args: configargparse.Namespace, data: Data
-) -> T.Iterable[None]:
-    if not args.dev or not data.guestbook_comments:
+def refresh_data(data: Data, dev: bool) -> T.Iterable[None]:
+    if not dev or not data.guestbook_comments:
         logger.info("Getting guest book comment list…")
         with exception_guard():
             data.guestbook_comments = list(dedibox.list_guestbook_comments())
             yield
 
-    if not args.dev or not data.torrent_requests:
+    if not dev or not data.torrent_requests:
         logger.info("Getting request list…")
         with exception_guard():
             data.torrent_requests = list(dedibox.list_torrent_requests())
             yield
 
-    if not args.dev or not data.torrent_stats:
+    if not dev or not data.torrent_stats:
         logger.info("Getting transmission stats…")
         with exception_guard():
-            data.torrent_stats = dedibox.get_torrent_stats(
-                args.dedibox_user, args.dedibox_pass
-            )
+            data.torrent_stats = dedibox.get_torrent_stats()
             yield
 
-    if not args.dev or not data.neocities_traffic_stats:
+    if not dev or not data.neocities_traffic_stats:
         logger.info("Getting neocities traffic stats…")
         with exception_guard():
-            data.neocities_traffic_stats = list(
-                neocities.get_traffic_stats(
-                    args.neocities_user, args.neocities_pass
-                )
-            )
+            data.neocities_traffic_stats = list(neocities.get_traffic_stats())
             yield
 
-    if not args.dev or not data.dedibox_traffic_stats:
+    if not dev or not data.dedibox_traffic_stats:
         logger.info("Getting website traffic stats…")
         data.dedibox_traffic_stats = list(dedibox.get_traffic_stats())
         yield
 
-    if not args.dev or not data.nyaa_si_torrents:
+    if not dev or not data.nyaa_si_torrents:
         logger.info("Getting nyaa torrents…")
         with exception_guard():
-            data.nyaa_si_torrents = list(
-                nyaa_si.list_user_torrents(args.nyaasi_user, args.nyaasi_pass)
-            )
+            data.nyaa_si_torrents = list(nyaa_si.list_user_torrents())
             yield
 
-    if not args.dev or not data.nyaa_si_comments:
+    if not dev or not data.nyaa_si_comments:
         logger.info("Getting nyaa comments…")
         if not data.nyaa_si_comments:
             data.nyaa_si_comments = {}
@@ -99,7 +88,7 @@ def refresh_data(
                     )
                     yield
 
-    if not args.dev or not data.anidex_torrents:
+    if not dev or not data.anidex_torrents:
         logger.info("Getting anidex torrents…")
 
         def page_callback(offset: int) -> None:
@@ -107,11 +96,6 @@ def refresh_data(
 
         with exception_guard():
             data.anidex_torrents = list(
-                anidex.list_group_torrents(
-                    args.anidex_user,
-                    args.anidex_pass,
-                    args.anidex_group,
-                    page_callback,
-                )
+                anidex.list_group_torrents(page_callback)
             )
             yield

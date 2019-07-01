@@ -1,5 +1,6 @@
 import csv
 import dataclasses
+import os
 import typing as T
 
 import dateutil.parser
@@ -8,6 +9,9 @@ import requests
 from dataclasses_json import dataclass_json
 
 from .common import BaseTrafficStat
+
+NEOCITIES_USER = os.environ["NEOCITIES_USER"]
+NEOCITIES_PASS = os.environ["NEOCITIES_PASS"]
 
 
 @dataclass_json
@@ -34,9 +38,7 @@ class InvalidAuth(ApiError):
         super().__init__("invalid credentials")
 
 
-def get_traffic_stats(
-    user_name: str, password: str
-) -> T.Iterable[TrafficStat]:
+def get_traffic_stats() -> T.Iterable[TrafficStat]:
     session = requests.session()
 
     response = session.get("https://neocities.org/signin")
@@ -48,15 +50,15 @@ def get_traffic_stats(
         f"https://neocities.org/signin",
         data={
             "csrf_token": csrf_token,
-            "username": user_name,
-            "password": password,
+            "username": NEOCITIES_USER,
+            "password": NEOCITIES_PASS,
         },
     )
     if "Invalid login" in response.text:
         raise InvalidAuth
 
     response = session.get(
-        f"https://neocities.org/site/{user_name}"
+        f"https://neocities.org/site/{NEOCITIES_USER}"
         f"/stats?days=sincethebigbang&format=csv"
     )
     response.raise_for_status()

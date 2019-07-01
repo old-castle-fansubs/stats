@@ -1,4 +1,5 @@
 import datetime
+import os
 import typing as T
 
 import humanfriendly
@@ -8,31 +9,33 @@ import requests
 from .common import BaseComment as Comment
 from .common import BaseTorrent as Torrent
 
+NYAA_SI_USER = os.environ["NYAA_SI_USER"]
+NYAA_SI_PASS = os.environ["NYAA_SI_PASS"]
 
-def list_user_torrents(user_name: str, password: str) -> T.Iterable[Torrent]:
+
+def list_user_torrents() -> T.Iterable[Torrent]:
     session = requests.Session()
 
-    if password:
-        response = session.get("https://nyaa.si/login")
-        response.raise_for_status()
+    response = session.get("https://nyaa.si/login")
+    response.raise_for_status()
 
-        tree = lxml.html.fromstring(response.content)
-        csrf_token = tree.xpath('//input[@id="csrf_token"]/@value')[0]
+    tree = lxml.html.fromstring(response.content)
+    csrf_token = tree.xpath('//input[@id="csrf_token"]/@value')[0]
 
-        response = session.post(
-            "https://nyaa.si/login",
-            data={
-                "username": user_name,
-                "password": password,
-                "csrf_token": csrf_token,
-            },
-        )
-        response.raise_for_status()
+    response = session.post(
+        "https://nyaa.si/login",
+        data={
+            "username": NYAA_SI_USER,
+            "password": NYAA_SI_PASS,
+            "csrf_token": csrf_token,
+        },
+    )
+    response.raise_for_status()
 
     page = 1
     while True:
         response = session.get(
-            f"https://nyaa.si/user/{user_name}?s=id&o=desc&page={page}"
+            f"https://nyaa.si/user/{NYAA_SI_USER}?s=id&o=desc&page={page}"
         )
         response.raise_for_status()
 

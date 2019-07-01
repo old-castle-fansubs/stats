@@ -1,4 +1,5 @@
 import datetime
+import os
 import typing as T
 from dataclasses import dataclass
 
@@ -9,6 +10,10 @@ from dataclasses_json import dataclass_json
 
 from oc_stats.common import BaseTorrent
 
+ANIDEX_USER = os.environ["ANIDEX_USER"]
+ANIDEX_PASS = os.environ["ANIDEX_PASS"]
+ANIDEX_GROUP_ID = os.environ["ANIDEX_GROUP_ID"]
+
 
 @dataclass_json
 @dataclass
@@ -17,9 +22,6 @@ class Torrent(BaseTorrent):
 
 
 def list_group_torrents(
-    user_name: str,
-    password: str,
-    group_id: int,
     page_callback: T.Optional[T.Callable[[int], None]],
 ) -> T.Iterable[Torrent]:
     session = requests.Session()
@@ -27,7 +29,7 @@ def list_group_torrents(
     response = session.post(
         "https://anidex.info/ajax/actions.ajax.php?function=login",
         headers={"x-requested-with": "XMLHttpRequest"},
-        data={"login_username": user_name, "login_password": password},
+        data={"login_username": ANIDEX_USER, "login_password": ANIDEX_PASS},
     )
     response.raise_for_status()
 
@@ -37,7 +39,7 @@ def list_group_torrents(
             page_callback(offset)
 
         response = session.get(
-            f"https://anidex.info/?page=group&id={group_id}&offset={offset}"
+            f"https://anidex.info/?page=group&id={ANIDEX_GROUP_ID}&offset={offset}"
         )
         response.raise_for_status()
 
