@@ -1,10 +1,6 @@
 var parseTime = d3.timeParse('%Y-%m-%d');
-data.forEach(function(d) {
-  d.day = parseTime(d.day);
-});
-data.sort(function(a, b) {
-  return a.day - b.day;
-});
+hits.forEach(function(d) { d.day = parseTime(d.day); });
+downloads.forEach(function(d) { d.day = parseTime(d.day); });
 
 
 window.addEventListener('DOMContentLoaded', function () {
@@ -16,14 +12,17 @@ window.addEventListener('DOMContentLoaded', function () {
 
     var x = d3.scaleTime()
         .range([0, innerWidth])
-        .domain(d3.extent(data, function(d) { return d.day; }));
+        .domain(d3.extent(
+            hits.concat(downloads), function(d) { return d.day; })
+        );
     var y = d3.scaleLinear()
         .range([innerHeight, 0])
         .domain([
             0,
-            d3.max(data, function(d) {
-                return Math.max(d.hits, d.views);
-            })
+            d3.max(
+                hits.concat(downloads),
+                function(d) { return Math.min(2000, d.value); },
+            )
         ])
         .nice();
 
@@ -54,64 +53,64 @@ window.addEventListener('DOMContentLoaded', function () {
 
     // areas
     svg.append('path')
-        .data([data])
+        .data([hits])
         .attr('class', 'area hits')
         .attr(
             'd',
             d3.area()
             .x(function(d) { return x(d.day); })
             .y0(innerHeight)
-            .y1(function(d) { return y(d.hits); })
+            .y1(function(d) { return y(d.value); })
         );
     svg.append('path')
-        .data([data])
-        .attr('class', 'area views')
+        .data([downloads])
+        .attr('class', 'area downloads')
         .attr(
             'd',
             d3.area()
             .x(function(d) { return x(d.day); })
             .y0(innerHeight)
-            .y1(function(d) { return y(d.views); })
+            .y1(function(d) { return y(d.value); })
         );
 
     // lines
     svg.append('path')
-        .data([data])
+        .data([hits])
         .attr('class', 'line hits')
         .attr(
             'd',
             d3.line()
             .x(function(d) { return x(d.day); })
-            .y(function(d) { return y(d.hits); })
+            .y(function(d) { return y(d.value); })
         );
     svg.append('path')
-        .data([data])
-        .attr('class', 'line views')
+        .data([downloads])
+        .attr('class', 'line downloads')
         .attr(
             'd',
             d3.line()
             .x(function(d) { return x(d.day); })
-            .y(function(d) { return y(d.views); })
+            .y(function(d) { return y(d.value); })
         );
 
     // average lines
     svg.append('path')
-        .data([data])
+        .data([hits])
         .attr('class', 'line hits-avg')
         .attr(
             'd',
             d3.line()
             .x(function(d) { return x(d.day); })
-            .y(function(d) { return y(d.hits_avg); })
+            .y(function(d) { return y(d.value_avg); })
         );
     svg.append('path')
-        .data([data])
-        .attr('class', 'line views-avg')
+        .data([downloads])
+        .attr('class', 'line downloads-avg')
         .attr(
             'd',
             d3.line()
             .x(function(d) { return x(d.day); })
-            .y(function(d) { return y(d.views_avg); })
+            .y(function(d) { return y(d.value_avg); })
         );
 
     // axes

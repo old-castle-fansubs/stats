@@ -48,7 +48,7 @@
       stroke: hsla(200, 80%, 60%, 0.8);
       stroke-width: 1px;
     }
-    .traffic .line.views {
+    .traffic .line.downloads {
       fill: none;
       stroke: hsla(100, 80%, 40%, 0.8);
       stroke-width: 1px;
@@ -57,7 +57,7 @@
       fill: hsla(200, 100%, 70%, 0.3);
       stroke: none;
     }
-    .traffic .area.views {
+    .traffic .area.downloads {
       fill: hsla(100, 100%, 70%, 0.3);
       stroke: none;
     }
@@ -74,7 +74,7 @@
       stroke: hsla(200, 80%, 40%, 1);
       stroke-width: 1px;
     }
-    .traffic .line.views-avg {
+    .traffic .line.downloads-avg {
       fill: none;
       stroke: hsla(100, 80%, 20%, 1);
       stroke-width: 1px;
@@ -249,15 +249,14 @@
       <div class='col-md-8 col-12'>
         <div class='traffic'>
           <p class='float-right small mt-3 mb-0'>
-            Total hits: {{ traffic_stats|sum(attribute='hits') }}
-            <span class='mr-2 ml-2'>·</span>
-            Total views: {{ traffic_stats|sum(attribute='views') }}
+            Total hits: {{ hits|sum(attribute='value') }}
           </p>
 
-          <h2>Neocities traffic</h2>
+          <h2>Daily stats</h2>
 
           <script src='https://d3js.org/d3.v4.min.js'></script>
-          <script>var data = {{ traffic_stats|tojson|safe }};</script>
+          <script>var hits = {{ hits|tojson|safe }};</script>
+          <script>var downloads = {{ downloads|tojson|safe }};</script>
           <script>{% include 'report-traffic.js' %}</script>
 
           <div class='target'></div>

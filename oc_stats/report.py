@@ -43,20 +43,37 @@ def json_default(obj: T.Any) -> T.Any:
 
 
 @dataclasses.dataclass
-class ReportTrafficStat(BaseTrafficStat):
-    views: int
-    hits_avg: float
-    views_avg: float
+class SmoothedStat:
+    day: datetime.date
+    value: T.Union[int, float]
+    value_avg: float
 
 
 @dataclasses.dataclass
 class ReportContext:
     date: datetime.datetime
     comments: T.List[BaseComment]
-    torrent_stats: dedibox.TorrentStats
-    torrent_requests: T.List[dedibox.TorrentRequest]
-    traffic_stats: T.List[ReportTrafficStat]
     torrents: T.List[BaseTorrent]
+    torrent_requests: T.List[dedibox.TorrentRequest]
+    torrent_stats: dedibox.TorrentStats
+    hits: T.List[SmoothedStat]
+    downloads: T.List[SmoothedStat]
+
+
+def build_trendline(
+    days: T.List[datetime.date], values: T.List[T.Union[int, float]]
+) -> SmoothedStat:
+    assert len(days) == len(values)
+    diffs = []
+    prev_value = 0
+    for value in values:
+        diffs.append(value - prev_value)
+        prev_value = value
+    diffs_avg = smooth(diffs)
+    return [
+        SmoothedStat(day=day, value=diff, value_avg=diff_avg)
+        for day, diff, diff_avg in zip(days, diffs, diffs_avg)
+    ]
 
 
 def build_report_context(data: T.Any) -> ReportContext:
@@ -71,46 +88,25 @@ def build_report_context(data: T.Any) -> ReportContext:
             torrent = torrents.get(("nyaa.si", torrent_id))
             comments.append(nyaa_si_comment)
 
-    min_day = min(
-        stat.day
-        for stat in data.neocities_traffic_stats + data.dedibox_traffic_stats
-    )
+    daily_stats = list(sorted(data.daily_stats, key=lambda stat: stat.day))
+    min_day = min(stat.day for stat in daily_stats)
     max_day = datetime.datetime.today().date()
-    days = (max_day - min_day).days + 1
+    num_days = (max_day - min_day).days + 1
+    days = [min_day + datetime.timedelta(days=i) for i in range(num_days)]
 
-    hits = [0] * days
-    views = [0] * days
-
-    for stat in data.neocities_traffic_stats:
-        idx = (stat.day - min_day).days
-        hits[idx] += stat.hits
-        views[idx] += stat.views
-
-    for stat in data.dedibox_traffic_stats:
-        idx = (stat.day - min_day).days
-        hits[idx] += stat.hits
-
-    hits_avg = smooth(hits)
-    views_avg = smooth(views)
-
-    traffic_stats = [
-        ReportTrafficStat(
-            day=min_day + datetime.timedelta(days=i),
-            hits=hits[i],
-            views=views[i],
-            hits_avg=hits_avg[i],
-            views_avg=views_avg[i],
-        )
-        for i in range(days)
-    ]
+    hits = build_trendline(days, [stat.hits for stat in daily_stats])
+    downloads = build_trendline(
+        days, [stat.nyaa_si_dl + stat.anidex_dl for stat in daily_stats]
+    )
 
     return ReportContext(
         date=datetime.datetime.now(),
         comments=comments,
         torrents=list(torrents.values()),
-        torrent_stats=data.torrent_stats,
         torrent_requests=data.torrent_requests,
-        traffic_stats=traffic_stats,
+        torrent_stats=daily_stats[-1].torrent_stats,
+        hits=hits,
+        downloads=downloads,
     )
 
 

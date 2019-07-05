@@ -18,7 +18,15 @@ DATA_PATH = ROOT_PATH.parent / "cache.json"
 @dataclass_json
 @dataclasses.dataclass
 class DailyStat:
-    views: int = 0
+    day: datetime.date = dataclasses.field(
+        metadata={
+            "dataclasses_json": {
+                "encoder": datetime.date.isoformat,
+                "decoder": datetime.date.fromisoformat,
+            }
+        }
+    )
+    hits: int = 0
     nyaa_si_dl: int = 0
     anidex_dl: int = 0
     torrent_stats: T.Optional[dedibox.TorrentStats] = None
@@ -28,16 +36,11 @@ class DailyStat:
 @dataclasses.dataclass
 class Data:
     guestbook_comments: T.List[dedibox.Comment]
-    torrent_stats: T.Optional[dedibox.TorrentStats]
     torrent_requests: T.List[dedibox.TorrentRequest]
-    neocities_traffic_stats: T.List[neocities.TrafficStat]
-    dedibox_traffic_stats: T.List[dedibox.TrafficStat]
     nyaa_si_torrents: T.List[nyaa_si.Torrent]
     nyaa_si_comments: T.Dict[int, T.List[nyaa_si.Comment]]
     anidex_torrents: T.List[anidex.Torrent]
-    daily_stats: T.Dict[str, DailyStat] = dataclasses.field(
-        default_factory=dict
-    )
+    daily_stats: T.List[DailyStat] = dataclasses.field(default_factory=list)
 
 
 @contextlib.contextmanager
@@ -61,23 +64,6 @@ def refresh_data(data: Data, dev: bool) -> T.Iterable[None]:
         with exception_guard():
             data.torrent_requests = list(dedibox.list_torrent_requests())
             yield
-
-    if not dev or not data.torrent_stats:
-        logger.info("Getting transmission stats…")
-        with exception_guard():
-            data.torrent_stats = dedibox.get_torrent_stats()
-            yield
-
-    if not dev or not data.neocities_traffic_stats:
-        logger.info("Getting neocities traffic stats…")
-        with exception_guard():
-            data.neocities_traffic_stats = list(neocities.get_traffic_stats())
-            yield
-
-    if not dev or not data.dedibox_traffic_stats:
-        logger.info("Getting website traffic stats…")
-        data.dedibox_traffic_stats = list(dedibox.get_traffic_stats())
-        yield
 
     if not dev or not data.nyaa_si_torrents:
         logger.info("Getting nyaa torrents…")
@@ -113,19 +99,54 @@ def refresh_data(data: Data, dev: bool) -> T.Iterable[None]:
             )
             yield
 
-    data.daily_stats[
-        datetime.datetime.today().strftime("%Y-%m-%d")
-    ] = DailyStat(
-        views=(
-            sum(stat.views for stat in data.neocities_traffic_stats)
-            + sum(stat.hits for stat in data.dedibox_traffic_stats)
-        ),
-        anidex_dl=sum(
-            torrent.download_count for torrent in data.anidex_torrents
-        ),
-        nyaa_si_dl=sum(
-            torrent.download_count for torrent in data.nyaa_si_torrents
-        ),
-        torrent_stats=data.torrent_stats,
-    )
-    yield
+    if not dev or not data.daily_stats:
+        with exception_guard():
+            logger.info("Getting transmission stats…")
+            torrent_stats = dedibox.get_torrent_stats()
+
+            logger.info("Getting website traffic stats…")
+            dedibox_traffic_stats = list(dedibox.get_traffic_stats())
+
+            logger.info("Getting neocities traffic stats…")
+            neocities_traffic_stats = list(neocities.get_traffic_stats())
+
+            min_date = min(
+                stat.day
+                for stat in dedibox_traffic_stats + neocities_traffic_stats
+            )
+
+            date_to_stat = {stat.day: stat for stat in data.daily_stats}
+
+            def get_daily_stat(day: datetime.date) -> DailyStat:
+                if day in date_to_stat:
+                    return date_to_stat[day]
+                stat = DailyStat(day=day)
+                data.daily_stats.append(stat)
+                date_to_stat[day] = stat
+                return stat
+
+            day = min_date
+            while day <= datetime.datetime.today().date():
+                daily_stat = get_daily_stat(day)
+                daily_stat.hits = sum(
+                    stat.views
+                    for stat in neocities_traffic_stats
+                    if stat.day <= day
+                ) + sum(
+                    stat.hits
+                    for stat in dedibox_traffic_stats
+                    if stat.day <= day
+                )
+
+                day += datetime.timedelta(days=1)
+
+            today_stat = get_daily_stat(datetime.datetime.today().date())
+            today_stat.torrent_stats = torrent_stats
+            today_stat.anidex_dl = sum(
+                torrent.download_count for torrent in data.anidex_torrents
+            )
+            today_stat.nyaa_si_dl = sum(
+                torrent.download_count for torrent in data.nyaa_si_torrents
+            )
+
+            yield
