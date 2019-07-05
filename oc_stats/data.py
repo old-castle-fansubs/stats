@@ -26,9 +26,9 @@ class DailyStat:
             }
         }
     )
-    hits: int = 0
-    nyaa_si_dl: int = 0
-    anidex_dl: int = 0
+    hits: T.Optional[int] = None
+    nyaa_si_dl: T.Optional[int] = None
+    anidex_dl: T.Optional[int] = None
     torrent_stats: T.Optional[dedibox.TorrentStats] = None
 
 

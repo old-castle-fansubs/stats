@@ -23,6 +23,8 @@ from . import dedibox
 
 def smooth(source: np.array) -> np.array:
     window_len = 45
+    if len(source) < window_len:
+        return source
     x = np.array(source)
     s = np.r_[
         2 * x[0] - x[window_len - 1 :: -1], x, 2 * x[-1] - x[-1:-window_len:-1]
@@ -62,28 +64,18 @@ class ReportContext:
 
 
 def build_trendline(
-    days: T.List[datetime.date],
-    values: T.List[T.Union[int, float]],
-    fix_initial=False,
+    items: T.List[T.Tuple[datetime.date, T.Union[int, float]]],
 ) -> SmoothedStat:
-    assert len(days) == len(values)
-
-    if fix_initial:
-        for i, value in enumerate(values):
-            if value:
-                break
-        for j in range(i):
-            values[j] = value * j // i
-
-    diffs = []
+    diffs: T.List[float] = []
     prev_value = 0
-    for value in values:
+    for item in items:
+        _day, value = item
         diffs.append(value - prev_value)
         prev_value = value
     diffs_avg = smooth(diffs)
     return [
         SmoothedStat(day=day, value=value, diff=diff, diff_avg=diff_avg)
-        for day, value, diff, diff_avg in zip(days, values, diffs, diffs_avg)
+        for (day, value), diff, diff_avg in zip(items, diffs, diffs_avg)
     ]
 
 
@@ -105,11 +97,13 @@ def build_report_context(data: T.Any) -> ReportContext:
     num_days = (max_day - min_day).days + 1
     days = [min_day + datetime.timedelta(days=i) for i in range(num_days)]
 
-    hits = build_trendline(days, [stat.hits for stat in daily_stats])
+    hits = build_trendline([(stat.day, stat.hits) for stat in daily_stats])
     downloads = build_trendline(
-        days,
-        [stat.nyaa_si_dl + stat.anidex_dl for stat in daily_stats],
-        fix_initial=True,
+        [
+            (stat.day, (stat.nyaa_si_dl or 0) + (stat.anidex_dl or 0))
+            for stat in daily_stats
+            if stat.nyaa_si_dl is not None or stat.anidex_dl is not None
+        ]
     )
 
     return ReportContext(
