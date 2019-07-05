@@ -62,9 +62,19 @@ class ReportContext:
 
 
 def build_trendline(
-    days: T.List[datetime.date], values: T.List[T.Union[int, float]]
+    days: T.List[datetime.date],
+    values: T.List[T.Union[int, float]],
+    fix_initial=False,
 ) -> SmoothedStat:
     assert len(days) == len(values)
+
+    if fix_initial:
+        for i, value in enumerate(values):
+            if value:
+                break
+        for j in range(i):
+            values[j] = value * j // i
+
     diffs = []
     prev_value = 0
     for value in values:
@@ -97,7 +107,9 @@ def build_report_context(data: T.Any) -> ReportContext:
 
     hits = build_trendline(days, [stat.hits for stat in daily_stats])
     downloads = build_trendline(
-        days, [stat.nyaa_si_dl + stat.anidex_dl for stat in daily_stats]
+        days,
+        [stat.nyaa_si_dl + stat.anidex_dl for stat in daily_stats],
+        fix_initial=True,
     )
 
     return ReportContext(
