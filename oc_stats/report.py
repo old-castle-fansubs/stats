@@ -9,12 +9,7 @@ from pathlib import Path
 import jinja2
 import numpy as np
 
-from oc_stats.common import (
-    ROOT_PATH,
-    BaseComment,
-    BaseTorrent,
-    BaseTrafficStat,
-)
+from oc_stats.common import ROOT_PATH, BaseComment, BaseTorrent
 from oc_stats.data import Data
 from oc_stats.markdown import render_markdown
 
