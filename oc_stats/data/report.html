@@ -25,56 +25,45 @@
       margin-right: auto;
     }
 
-    .traffic .svg-container {
-      display: inline-block;
-      position: relative;
-      width: calc(100% + 20px);
-      padding-bottom: calc(43% + 20px); /* aspect ratio */
-      margin: 0 -10px;
-      vertical-align: top;
-      overflow: hidden;
+    .daily-stats .svg-container>svg {
+      width: 100%;
+      height: 100%;
     }
-    .traffic .svg-container>svg {
-      display: inline-block;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-    .traffic .svg-container>svg * {
+    .daily-stats .svg-container>svg * {
       vector-effect: non-scaling-stroke;
     }
-    .traffic .line.hits {
+    .daily-stats .line.hits {
       fill: none;
       stroke: hsla(200, 80%, 60%, 0.8);
       stroke-width: 1px;
     }
-    .traffic .line.downloads {
+    .daily-stats .line.downloads {
       fill: none;
       stroke: hsla(100, 80%, 40%, 0.8);
       stroke-width: 1px;
     }
-    .traffic .area.hits {
+    .daily-stats .area.hits {
       fill: hsla(200, 100%, 70%, 0.3);
       stroke: none;
     }
-    .traffic .area.downloads {
+    .daily-stats .area.downloads {
       fill: hsla(100, 100%, 70%, 0.3);
       stroke: none;
     }
-    .traffic .grid line {
+    .daily-stats .grid line {
       stroke: lightgrey;
       stroke-opacity: 0.7;
       shape-rendering: crispEdges;
     }
-    .traffic .grid path {
+    .daily-stats .grid path {
       stroke-width: 0;
     }
-    .traffic .line.hits-avg {
+    .daily-stats .line.hits-avg {
       fill: none;
       stroke: hsla(200, 80%, 40%, 1);
       stroke-width: 1px;
     }
-    .traffic .line.downloads-avg {
+    .daily-stats .line.downloads-avg {
       fill: none;
       stroke: hsla(100, 80%, 20%, 1);
       stroke-width: 1px;
@@ -136,7 +125,7 @@
       </div>
 
       <div class='col-lg-6 col-md-8 col-12'>
-        <div class='traffic'>
+        <div class='daily-stats'>
           <p class='float-right small mt-3 mb-0'>
             Total hits: {{ hits|sum(attribute='value') }}
           </p>
@@ -146,7 +135,7 @@
           <script src='https://d3js.org/d3.v4.min.js'></script>
           <script>var hits = {{ hits|tojson|safe }};</script>
           <script>var downloads = {{ downloads|tojson|safe }};</script>
-          <script>{% include 'report-traffic.js' %}</script>
+          <script>{% include 'report-daily-stats.js' %}</script>
 
           <div class='target'></div>
         </div>
