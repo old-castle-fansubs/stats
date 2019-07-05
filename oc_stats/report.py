@@ -46,7 +46,8 @@ def json_default(obj: T.Any) -> T.Any:
 class SmoothedStat:
     day: datetime.date
     value: T.Union[int, float]
-    value_avg: float
+    diff: T.Union[int, float]
+    diff_avg: float
 
 
 @dataclasses.dataclass
@@ -71,8 +72,8 @@ def build_trendline(
         prev_value = value
     diffs_avg = smooth(diffs)
     return [
-        SmoothedStat(day=day, value=diff, value_avg=diff_avg)
-        for day, diff, diff_avg in zip(days, diffs, diffs_avg)
+        SmoothedStat(day=day, value=value, diff=diff, diff_avg=diff_avg)
+        for day, value, diff, diff_avg in zip(days, values, diffs, diffs_avg)
     ]
 
 

@@ -127,7 +127,8 @@
       <div class='col-lg-6 col-md-8 col-12'>
         <div class='daily-stats'>
           <p class='float-right small mt-3 mb-0'>
-            Total hits: {{ hits|sum(attribute='value') }}
+            Total hits: {{ hits[-1].value }}
+            Total downloads: {{ downloads[-1].value }}
           </p>
 
           <h2>Daily stats</h2>
