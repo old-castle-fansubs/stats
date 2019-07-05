@@ -1,5 +1,6 @@
 import contextlib
 import dataclasses
+import datetime
 import logging
 import typing as T
 
@@ -16,6 +17,15 @@ DATA_PATH = ROOT_PATH.parent / "cache.json"
 
 @dataclass_json
 @dataclasses.dataclass
+class DailyStat:
+    views: int = 0
+    nyaa_si_dl: int = 0
+    anidex_dl: int = 0
+    torrent_stats: T.Optional[dedibox.TorrentStats] = None
+
+
+@dataclass_json
+@dataclasses.dataclass
 class Data:
     guestbook_comments: T.List[dedibox.Comment]
     torrent_stats: T.Optional[dedibox.TorrentStats]
@@ -25,6 +35,9 @@ class Data:
     nyaa_si_torrents: T.List[nyaa_si.Torrent]
     nyaa_si_comments: T.Dict[int, T.List[nyaa_si.Comment]]
     anidex_torrents: T.List[anidex.Torrent]
+    daily_stats: T.Dict[str, DailyStat] = dataclasses.field(
+        default_factory=dict
+    )
 
 
 @contextlib.contextmanager
@@ -99,3 +112,20 @@ def refresh_data(data: Data, dev: bool) -> T.Iterable[None]:
                 anidex.list_group_torrents(page_callback)
             )
             yield
+
+    data.daily_stats[
+        datetime.datetime.today().strftime("%Y-%m-%d")
+    ] = DailyStat(
+        views=(
+            sum(stat.views for stat in data.neocities_traffic_stats)
+            + sum(stat.hits for stat in data.dedibox_traffic_stats)
+        ),
+        anidex_dl=sum(
+            torrent.download_count for torrent in data.anidex_torrents
+        ),
+        nyaa_si_dl=sum(
+            torrent.download_count for torrent in data.nyaa_si_torrents
+        ),
+        torrent_stats=data.torrent_stats,
+    )
+    yield

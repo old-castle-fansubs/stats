@@ -34,6 +34,7 @@ def main() -> None:
             nyaa_si_torrents=[],
             anidex_torrents=[],
             nyaa_si_comments={},
+            daily_stats={},
         )
 
     for _ in refresh_data(data, args.dev):
