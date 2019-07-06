@@ -32,32 +32,52 @@
     .daily-stats .svg-container>svg * {
       vector-effect: non-scaling-stroke;
     }
-    .daily-stats .line.hits {
-      fill: none;
+
+    .daily-stats .hits {
       stroke: hsla(200, 80%, 60%, 0.8);
-      stroke-width: 1px;
-    }
-    .daily-stats .line.downloads {
-      fill: none;
-      stroke: hsla(100, 80%, 40%, 0.8);
-      stroke-width: 1px;
-    }
-    .daily-stats .area.hits {
       fill: hsla(200, 100%, 70%, 0.3);
-      stroke: none;
     }
-    .daily-stats .area.downloads {
+    .daily-stats text.hits {
+      stroke: none;
+      fill: hsla(200, 80%, 60%, 0.8);
+    }
+
+    .daily-stats .downloads {
+      stroke: hsla(100, 80%, 40%, 0.8);
       fill: hsla(100, 100%, 70%, 0.3);
+    }
+    .daily-stats text.downloads {
+      stroke: none;
+      fill: hsla(100, 80%, 40%, 0.8);
+    }
+
+    .daily-stats .line {
+      fill: none;
+      stroke-width: 1px;
+    }
+    .daily-stats .area {
       stroke: none;
     }
     .daily-stats .grid line {
-      stroke: lightgrey;
+      stroke: #DDD;
       stroke-opacity: 0.7;
       shape-rendering: crispEdges;
     }
     .daily-stats .grid path {
       stroke-width: 0;
     }
+
+    .daily-stats .legend-wrapper {
+      stroke: silver;
+      fill: rgba(255, 255, 255, 0.8);
+    }
+    .daily-stats text.legend {
+      dominant-baseline: central;
+      text-anchor: left;
+      font-size: 12px;
+      stroke: none;
+    }
+
     .daily-stats .line.hits-avg {
       fill: none;
       stroke: hsla(200, 80%, 40%, 1);
