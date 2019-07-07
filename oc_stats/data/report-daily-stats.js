@@ -97,7 +97,7 @@ window.addEventListener('DOMContentLoaded', () => {
     svg.append('rect')
         .attr('x', legendX)
         .attr('y', legendY)
-        .attr('width', 95)
+        .attr('width', 115)
         .attr('height', 2 * legendPadding + legendSquareSize * series.length + legendSquareSpacing * (series.length - 1))
         .attr('class', 'legend-wrapper');
 
