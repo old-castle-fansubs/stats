@@ -62,7 +62,7 @@ def build_trendline(
     items: T.List[T.Tuple[datetime.date, T.Union[int, float]]],
 ) -> SmoothedStat:
     diffs: T.List[float] = []
-    prev_value = 0
+    prev_value = items[0][1] if len(items) else 0
     for item in items:
         _day, value = item
         diffs.append(value - prev_value)
