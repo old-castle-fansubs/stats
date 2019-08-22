@@ -80,6 +80,9 @@ h2 {
   stroke-width: 1px;
 }
 
+.comments .text {
+  overflow-wrap: break-word;
+}
 .comments .text img {
   max-width: 100%;
 }
