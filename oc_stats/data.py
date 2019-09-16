@@ -100,6 +100,26 @@ def refresh_data(data: Data, dev: bool) -> T.Iterable[None]:
             yield
 
     if not dev or not data.daily_stats:
+        date_to_stat = {stat.day: stat for stat in data.daily_stats}
+
+        def get_daily_stat(day: datetime.date) -> DailyStat:
+            if day in date_to_stat:
+                return date_to_stat[day]
+            stat = DailyStat(day=day)
+            data.daily_stats.append(stat)
+            date_to_stat[day] = stat
+            return stat
+
+        with exception_guard():
+            today_stat = get_daily_stat(datetime.datetime.today().date())
+            today_stat.anidex_dl = sum(
+                torrent.download_count for torrent in data.anidex_torrents
+            )
+            today_stat.nyaa_si_dl = sum(
+                torrent.download_count for torrent in data.nyaa_si_torrents
+            )
+            yield
+
         with exception_guard():
             logger.info("Getting transmission stats…")
             torrent_stats = dedibox.get_torrent_stats()
@@ -114,16 +134,6 @@ def refresh_data(data: Data, dev: bool) -> T.Iterable[None]:
                 stat.day
                 for stat in dedibox_traffic_stats + neocities_traffic_stats
             )
-
-            date_to_stat = {stat.day: stat for stat in data.daily_stats}
-
-            def get_daily_stat(day: datetime.date) -> DailyStat:
-                if day in date_to_stat:
-                    return date_to_stat[day]
-                stat = DailyStat(day=day)
-                data.daily_stats.append(stat)
-                date_to_stat[day] = stat
-                return stat
 
             day = min_date
             while day <= datetime.datetime.today().date():
@@ -142,11 +152,4 @@ def refresh_data(data: Data, dev: bool) -> T.Iterable[None]:
 
             today_stat = get_daily_stat(datetime.datetime.today().date())
             today_stat.torrent_stats = torrent_stats
-            today_stat.anidex_dl = sum(
-                torrent.download_count for torrent in data.anidex_torrents
-            )
-            today_stat.nyaa_si_dl = sum(
-                torrent.download_count for torrent in data.nyaa_si_torrents
-            )
-
             yield
