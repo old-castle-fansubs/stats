@@ -6,7 +6,7 @@ import os
 import re
 import subprocess
 import typing as T
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import dateutil.parser
 import sshtunnel
@@ -122,7 +122,9 @@ def list_guestbook_comments() -> T.Iterable[Comment]:
         yield Comment(
             source="guestbook",
             website_link=f"https://oldcastle.moe/guest_book.html#comment-{item['id']}",
-            comment_date=dateutil.parser.parse(item["created"]),
+            comment_date=dateutil.parser.parse(item["created"]).replace(
+                tzinfo=timezone.utc
+            ),
             author_name=item["author"],
             author_avatar_url=avatar_url,
             text=item["text"],
