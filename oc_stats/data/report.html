@@ -1,3 +1,50 @@
+{%- macro render_comment(comment) %}
+  <li class='border bg-light'>
+    {% if comment.author_avatar_url -%}
+      <img {#-
+        #} class='avatar border' {#-
+        #} src='{{ comment.author_avatar_url }}' {#-
+        #} alt='{{ comment.author_name }}' {#-
+      -#} />
+    {%- else -%}
+      <img {#-
+        #} class='avatar border' {#-
+        #} src='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' {#-
+        #} alt='{{ comment.author_name }}' {#-
+      -#} />
+    {% endif %}
+    <strong class='author'>{{ comment.author_name }}</strong>
+    <div class='text mt-1'>
+      {{ comment.text|markdown|indent(6, False) }}
+    </div>
+    <small class='text-muted'>
+      {{- comment.comment_date.strftime('%Y-%m-%d %H:%M') }} on {{ comment.source }}
+      {%- if comment.website_link -%}
+        {#- #} (<a href='{{ comment.website_link }}'>
+          {%- if comment.website_title -%}
+            {{- comment.website_title -}}
+          {%- else -%}
+            link
+          {%- endif -%}
+        </a>)
+      {%- endif -%}
+    </small>
+  </li>
+{%- endmacro -%}
+
+{%- macro render_request(request) %}
+  <li>
+    {#- -#} <a href="{{ request.anidb_link }}">{{ request.title }}</a>
+    {%- if request.date -%}
+      {#- #} <small>({{ request.date.strftime('%Y-%m-%d') }})</small>
+    {%- endif -%}
+
+    {%- if request.comment -%}
+      {{ request.comment|markdown }}
+    {%- endif -%}
+  </li>
+{%- endmacro -%}
+
 <!DOCTYPE html>
 <html lang='en'>
 <head>
@@ -19,31 +66,22 @@
       <div class='col-lg-3 col-md-4 col-12'>
         <h2>Recent requests</h2>
         <ul class='requests'>
-          {% for request in torrent_requests|reverse %}
-            <li>
-              <a href="{{ request.anidb_link }}">{{ request.title }}</a>
-              {% if request.date %}
-                <small>({{ request.date.strftime('%Y-%m-%d') }})</small>
-              {% endif %}
-
-              {% if request.comment %}
-                {{ request.comment|markdown }}
-              {% endif %}
-            </li>
-          {% endfor %}
+          {%- for request in torrent_requests|reverse -%}
+            {{- render_request(request)|indent(8, True) -}}
+          {%- endfor %}
         </ul>
       </div>
 
       <div class='col-lg-6 col-md-8 col-12'>
         <div class='daily-stats'>
           <p class='float-right small mt-3 mb-0'>
-            {% if hits and downloads %}
-              Total hits: {{ hits[-1].value }}
+            {% if hits and downloads -%}
+              Total hits: {{ hits[-1].value }} {# -#}
               Total downloads: {{ downloads[-1].value }}
-            {% else %}
-              Total hits: ?
+            {%- else -%}
+              Total hits: ? {# -#}
               Total downloads: ?
-            {% endif %}
+            {%- endif %}
           </p>
 
           <h2>Daily stats</h2>
@@ -59,41 +97,9 @@
         <div class='comments'>
           <h2>Latest comments</h2>
           <ul class='list-unstyled'>
-            {% for comment in comments|sort(attribute='comment_date', reverse=True) %}
-              <li class='border bg-light'>
-                {% if comment.author_avatar_url %}
-                  <img class='avatar border'
-                       src='{{ comment.author_avatar_url }}'
-                       alt='{{ comment.author_name }}'
-                  />
-                {% else %}
-                  <img class='avatar border'
-                       src='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
-                       alt='{{ comment.author_name }}'
-                  />
-                {% endif %}
-                <strong class='author'>
-                  {{ comment.author_name }}
-                </strong>
-                <div class='text mt-1'>
-                  {{ comment.text|markdown }}
-                </div>
-                <small class='text-muted'>
-                  {{ comment.comment_date.strftime('%Y-%m-%d %H:%M') }}
-                  on
-                  {{ comment.source }}
-                  {% if comment.website_link %}
-                    (<a href='{{ comment.website_link }}'>
-                      {%- if comment.website_title -%}
-                        {{- comment.website_title -}}
-                      {%- else -%}
-                        link
-                      {%- endif -%}
-                    </a>)
-                  {% endif %}
-                </small>
-              </li>
-            {% endfor %}
+            {%- for comment in comments|sort(attribute='comment_date', reverse=True) -%}
+              {{- render_comment(comment)|indent(10, True) -}}
+            {%- endfor %}
           </ul>
         </div>
       </div>
@@ -133,7 +139,9 @@
           <tbody>
             <tr>
               <td>Torrents</td>
-              <td class='text-center' colspan='2'>{{ nyaa_si_torrents|length }} (visible: {{ nyaa_si_torrents|selectattr('visible', 'equalto', True)|list|length }})</td>
+              <td class='text-center' colspan='2'>
+                {{- nyaa_si_torrents|length }} (visible: {{ nyaa_si_torrents|selectattr('visible', 'equalto', True)|list|length }}) {#- -#}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -173,7 +181,9 @@
           <tbody>
             <tr>
               <td>Torrents</td>
-              <td class='text-center' colspan='2'>{{ anidex_torrents|length }} (visible: {{ anidex_torrents|selectattr('visible', 'equalto', True)|list|length }})</td>
+              <td class='text-center' colspan='2'>
+                {{- anidex_torrents|length }} (visible: {{ anidex_torrents|selectattr('visible', 'equalto', True)|list|length }}) {#- -#}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -190,31 +200,31 @@
             <tr>
               <td>Uptime</td>
               <td class='text-center'>
-                {% if torrent_stats %}
+                {%- if torrent_stats -%}
                   {{ torrent_stats.uptime }}
-                {% else %}
+                {%- else -%}
                   ?
-                {% endif %}
+                {%- endif -%}
               </td>
             </tr>
             <tr>
               <td>Uploaded</td>
               <td class='text-center'>
-                {% if torrent_stats %}
+                {%- if torrent_stats -%}
                   {{ torrent_stats.uploaded_bytes|filesizeformat }}
-                {% else %}
+                {%- else -%}
                   ?
-                {% endif %}
+                {%- endif -%}
               </td>
             </tr>
             <tr>
               <td>Downloaded</td>
               <td class='text-center'>
-                {% if torrent_stats %}
+                {%- if torrent_stats -%}
                   {{ torrent_stats.downloaded_bytes|filesizeformat }}
-                {% else %}
+                {%- else -%}
                   ?
-                {% endif %}
+                {%- endif -%}
               </td>
             </tr>
           </tbody>
@@ -222,11 +232,11 @@
             <tr>
               <td>Torrents</td>
               <td class='text-center'>
-                {% if torrent_stats %}
+                {%- if torrent_stats -%}
                   {{ torrent_stats.torrents }} (active: {{ torrent_stats.active_torrents }})
-                {% else %}
+                {%- else -%}
                   ?
-                {% endif %}
+                {%- endif -%}
               </td>
             </tr>
           </tbody>
