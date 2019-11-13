@@ -1,6 +1,7 @@
 import collections
 import dataclasses
 import hashlib
+import io
 import json
 import os
 import re
@@ -13,8 +14,9 @@ import sshtunnel
 import transmissionrpc
 from dataclasses_json import dataclass_json
 
-from .common import AuthError, BaseComment
-from .common import BaseTrafficStat as TrafficStat
+from oc_stats.common import AuthError, BaseComment
+from oc_stats.common import BaseTrafficStat as TrafficStat
+from oc_stats.common import json_datetime_metadata, json_timedelta_metadata
 
 NGINX_LOG_RE = re.compile(
     r"(?P<ipaddress>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) "
@@ -45,30 +47,14 @@ class TorrentStats:
     active_torrents: int
     downloaded_bytes: int
     uploaded_bytes: int
-    uptime: timedelta = dataclasses.field(
-        metadata={
-            "dataclasses_json": {
-                "encoder": lambda t: t.total_seconds(),
-                "decoder": lambda t: timedelta(seconds=t),
-            }
-        }
-    )
+    uptime: timedelta = dataclasses.field(metadata=json_timedelta_metadata)
 
 
 @dataclass_json
 @dataclasses.dataclass
 class TorrentRequest:
     date: T.Optional[datetime] = dataclasses.field(
-        metadata={
-            "dataclasses_json": {
-                "encoder": lambda x: datetime.isoformat(x)
-                if x is not None
-                else None,
-                "decoder": lambda x: datetime.fromisoformat(x)
-                if x is not None
-                else None,
-            }
-        }
+        metadata=json_datetime_metadata
     )
     title: str
     anidb_link: str
@@ -109,9 +95,8 @@ def list_guestbook_comments() -> T.Iterable[Comment]:
     content = subprocess.run(
         ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/comments.json"],
         check=True,
-        capture_output=True,
-        text=True,
-    ).stdout
+        stdout=subprocess.PIPE,
+    ).stdout.decode()
 
     items = json.loads(content)
     for item in items:
@@ -136,9 +121,8 @@ def list_torrent_requests() -> T.Iterable[TorrentRequest]:
     content = subprocess.run(
         ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/requests.json"],
         check=True,
-        capture_output=True,
-        text=True,
-    ).stdout
+        stdout=subprocess.PIPE,
+    ).stdout.decode()
 
     items = json.loads(content)
     for item in items:
@@ -162,14 +146,14 @@ def get_traffic_stats() -> T.Iterable[TrafficStat]:
             "--force",
             "/var/log/nginx/*_oldcastle.moe.log*",
         ],
-        text=True,
         stdout=subprocess.PIPE,
     )
 
     visits: T.Dict[datetime.date, int] = collections.defaultdict(int)
 
+    handle = io.TextIOWrapper(process.stdout, encoding="utf-8")
     while True:
-        line = process.stdout.readline()
+        line = handle.readline()
         line = line.rstrip()
         if not line:
             break

@@ -6,7 +6,7 @@ import typing as T
 
 from dataclasses_json import dataclass_json
 
-from oc_stats.common import ROOT_PATH
+from oc_stats.common import ROOT_PATH, json_date_metadata
 
 from . import anidex, dedibox, neocities, nyaa_si
 
@@ -18,14 +18,7 @@ DATA_PATH = ROOT_PATH.parent / "cache.json"
 @dataclass_json
 @dataclasses.dataclass
 class DailyStat:
-    day: datetime.date = dataclasses.field(
-        metadata={
-            "dataclasses_json": {
-                "encoder": datetime.date.isoformat,
-                "decoder": datetime.date.fromisoformat,
-            }
-        }
-    )
+    day: datetime.date = dataclasses.field(metadata=json_date_metadata)
     hits: T.Optional[int] = None
     nyaa_si_dl: T.Optional[int] = None
     anidex_dl: T.Optional[int] = None

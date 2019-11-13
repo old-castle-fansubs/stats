@@ -3,7 +3,40 @@ import datetime
 import typing as T
 from pathlib import Path
 
+import dateutil.parser
+
 ROOT_PATH = Path(__file__).parent
+
+json_date_metadata = {
+    "dataclasses_json": {
+        "encoder": (
+            lambda t: datetime.date.isoformat(t) if t is not None else None
+        ),
+        "decoder": (
+            lambda t: dateutil.parser.parse(t).date()
+            if t is not None
+            else None
+        ),
+    }
+}
+
+json_datetime_metadata = {
+    "dataclasses_json": {
+        "encoder": (
+            lambda t: datetime.datetime.isoformat(t) if t is not None else None
+        ),
+        "decoder": (
+            lambda t: dateutil.parser.parse(t) if t is not None else None
+        ),
+    }
+}
+
+json_timedelta_metadata = {
+    "dataclasses_json": {
+        "encoder": lambda t: t.total_seconds(),
+        "decoder": lambda t: datetime.timedelta(seconds=t),
+    }
+}
 
 
 @dataclasses.dataclass
@@ -41,12 +74,5 @@ class AuthError(RuntimeError):
 
 @dataclasses.dataclass
 class BaseTrafficStat:
-    day: datetime.date = dataclasses.field(
-        metadata={
-            "dataclasses_json": {
-                "encoder": datetime.date.isoformat,
-                "decoder": datetime.date.fromisoformat,
-            }
-        }
-    )
+    day: datetime.date = dataclasses.field(metadata=json_date_metadata)
     hits: int
