@@ -37,8 +37,13 @@
       <div class='col-lg-6 col-md-8 col-12'>
         <div class='daily-stats'>
           <p class='float-right small mt-3 mb-0'>
-            Total hits: {{ hits[-1].value }}
-            Total downloads: {{ downloads[-1].value }}
+            {% if hits and downloads %}
+              Total hits: {{ hits[-1].value }}
+              Total downloads: {{ downloads[-1].value }}
+            {% else %}
+              Total hits: ?
+              Total downloads: ?
+            {% endif %}
           </p>
 
           <h2>Daily stats</h2>
@@ -184,21 +189,45 @@
           <tbody>
             <tr>
               <td>Uptime</td>
-              <td class='text-center'>{{ torrent_stats.uptime }}</td>
+              <td class='text-center'>
+                {% if torrent_stats %}
+                  {{ torrent_stats.uptime }}
+                {% else %}
+                  ?
+                {% endif %}
+              </td>
             </tr>
             <tr>
               <td>Uploaded</td>
-              <td class='text-center'>{{ torrent_stats.uploaded_bytes|filesizeformat }}</td>
+              <td class='text-center'>
+                {% if torrent_stats %}
+                  {{ torrent_stats.uploaded_bytes|filesizeformat }}
+                {% else %}
+                  ?
+                {% endif %}
+              </td>
             </tr>
             <tr>
               <td>Downloaded</td>
-              <td class='text-center'>{{ torrent_stats.downloaded_bytes|filesizeformat }}</td>
+              <td class='text-center'>
+                {% if torrent_stats %}
+                  {{ torrent_stats.downloaded_bytes|filesizeformat }}
+                {% else %}
+                  ?
+                {% endif %}
+              </td>
             </tr>
           </tbody>
           <tbody>
             <tr>
               <td>Torrents</td>
-              <td class='text-center'>{{ torrent_stats.torrents }} (active: {{ torrent_stats.active_torrents }})</td>
+              <td class='text-center'>
+                {% if torrent_stats %}
+                  {{ torrent_stats.torrents }} (active: {{ torrent_stats.active_torrents }})
+                {% else %}
+                  ?
+                {% endif %}
+              </td>
             </tr>
           </tbody>
         </table>

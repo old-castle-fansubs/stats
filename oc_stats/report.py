@@ -87,7 +87,11 @@ def build_report_context(data: T.Any) -> ReportContext:
             comments.append(nyaa_si_comment)
 
     daily_stats = list(sorted(data.daily_stats, key=lambda stat: stat.day))
-    min_day = min(stat.day for stat in daily_stats)
+    min_day = (
+        min(stat.day for stat in daily_stats)
+        if daily_stats
+        else datetime.datetime.today().date()
+    )
     max_day = datetime.datetime.today().date()
     num_days = (max_day - min_day).days + 1
     days = [min_day + datetime.timedelta(days=i) for i in range(num_days)]
@@ -106,7 +110,7 @@ def build_report_context(data: T.Any) -> ReportContext:
         comments=comments,
         torrents=list(torrents.values()),
         torrent_requests=data.torrent_requests,
-        torrent_stats=daily_stats[-1].torrent_stats,
+        torrent_stats=daily_stats[-1].torrent_stats if daily_stats else None,
         hits=hits,
         downloads=downloads,
     )
