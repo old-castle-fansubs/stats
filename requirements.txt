@@ -3,3 +3,5 @@ lxml
 requests
 dataclasses-json
 misaka
+sshtunnel
+transmissionrpc
