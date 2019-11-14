@@ -107,9 +107,15 @@ def build_report_context(data: T.Any) -> ReportContext:
 
     return ReportContext(
         date=datetime.datetime.now(),
-        comments=comments,
+        comments=list(
+            sorted(
+                comments,
+                key=lambda comment: comment.comment_date,
+                reverse=True,
+            )
+        ),
         torrents=list(torrents.values()),
-        torrent_requests=data.torrent_requests,
+        torrent_requests=list(reversed(data.torrent_requests)),
         torrent_stats=daily_stats[-1].torrent_stats if daily_stats else None,
         hits=hits,
         downloads=downloads,

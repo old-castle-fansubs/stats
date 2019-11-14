@@ -34,7 +34,7 @@
 
 {%- macro render_request(request) %}
   <li>
-    {#- -#} <a href="{{ request.anidb_link }}">{{ request.title }}</a>
+    {#- -#} <a href='{{ request.anidb_link }}'>{{ request.title }}</a>
     {%- if request.date -%}
       {#- #} <small>({{ request.date.strftime('%Y-%m-%d') }})</small>
     {%- endif -%}
@@ -56,193 +56,220 @@
 </head>
 <body>
   <main class='container-fluid'>
-    <header class='page-header jumbotron pt-2 pb-2 mt-3 mb-3 text-center'>
-      <h1>Old Castle Fansubs - statistics</h1>
-      <p class='text-muted small'>Generated at {{ date.strftime('%Y-%m-%d %H:%M') }}</p>
-    </header>
+    <section class='row justify-content-center'>
+      <div class='col-lg-9 col-12'>
+        <header class='page-header jumbotron pt-2 pb-2 mt-3 mb-3 text-center'>
+          <h1>Old Castle Fansubs - statistics</h1>
+          <p class='text-muted small'>Generated at {{ date.strftime('%Y-%m-%d %H:%M') }}</p>
+        </header>
+      </div>
+    </section>
 
-    <section class='general row justify-content-center'>
-      {% set nyaa_si_torrents = torrents|selectattr('source', 'equalto', 'nyaa.si')|list %}
-      <div class='col-lg-3 col-md-4 col-12'>
-        <h2>Recent requests</h2>
-        <ul class='requests'>
-          {%- for request in torrent_requests|reverse -%}
-            {{- render_request(request)|indent(8, True) -}}
-          {%- endfor %}
+    <section class='row justify-content-center'>
+      <div class='col-lg-9 col-12'>
+        <ul class='nav nav-tabs' id='myTab' role='tablist'>
+          <li class='nav-item'>
+            <a class='nav-link active' id='dashboard-tab' data-toggle='tab' href='#dashboard' role='tab' aria-controls='dashboard' aria-selected='true'>Dashboard</a>
+          </li>
+          <li class='nav-item'>
+            <a class='nav-link' id='comments-tab' data-toggle='tab' href='#comments' role='tab' aria-controls='comments' aria-selected='false'>Comments</a>
+          </li>
+          <li class='nav-item'>
+            <a class='nav-link' id='requests-tab' data-toggle='tab' href='#requests' role='tab' aria-controls='requests' aria-selected='false'>Requests</a>
+          </li>
         </ul>
-      </div>
+        <div class='tab-content' id='myTabContent'>
+          <div class='tab-pane fade show active' id='dashboard' role='tabpanel' aria-labelledby='dashboard-tab'>
+            <div class='row justify-content-center'>
+              <div class='col-xl-8 col-12'>
+                <div class='daily-stats'>
+                  <p class='float-right small mt-3 mb-0'>
+                    {% if hits and downloads -%}
+                      Total hits: {{ hits[-1].value }} {# -#}
+                      Total downloads: {{ downloads[-1].value }}
+                    {%- else -%}
+                      Total hits: ? {# -#}
+                      Total downloads: ?
+                    {%- endif %}
+                  </p>
 
-      <div class='col-lg-6 col-md-8 col-12'>
-        <div class='daily-stats'>
-          <p class='float-right small mt-3 mb-0'>
-            {% if hits and downloads -%}
-              Total hits: {{ hits[-1].value }} {# -#}
-              Total downloads: {{ downloads[-1].value }}
-            {%- else -%}
-              Total hits: ? {# -#}
-              Total downloads: ?
-            {%- endif %}
-          </p>
+                  <h2>Daily stats</h2>
+                  <div class='target'></div>
+                </div>
+              </div>
 
-          <h2>Daily stats</h2>
+              <div class='general col-xl-4 col-12'>
+                <h2>Torrent stats</h2>
 
-          <script src='https://d3js.org/d3.v4.min.js'></script>
-          <script>var hits = {{ hits|tojson|safe }};</script>
-          <script>var downloads = {{ downloads|tojson|safe }};</script>
-          <script>{% include 'report-daily-stats.js' %}</script>
+                {% set nyaa_si_torrents = torrents|selectattr('source', 'equalto', 'nyaa.si')|list %}
+                {% set anidex_torrents = torrents|selectattr('source', 'equalto', 'anidex.info')|list %}
 
-          <div class='target'></div>
+                <table class='table table-sm'>
+                  <thead class='thead-light'>
+                    <tr>
+                      <th rowspan='2'></th>
+                      <th class='text-center' colspan='2'>nyaa.si</th>
+                      <th class='text-center' colspan='2'>anidex</th>
+                    </tr>
+                    <tr>
+                      <th class='text-center'>Total</th>
+                      <th class='text-center'>Average</th>
+                      <th class='text-center'>Total</th>
+                      <th class='text-center'>Average</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Downloads</td>
+                      <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='download_count') }}</td>
+                      <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='download_count'), nyaa_si_torrents|length) }}</td>
+                      <td class='text-center'>{{ anidex_torrents|sum(attribute='download_count') }}</td>
+                      <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='download_count'), anidex_torrents|length) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Seeders</td>
+                      <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='seeder_count') }}</td>
+                      <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='seeder_count'), nyaa_si_torrents|length) }}</td>
+                      <td class='text-center'>{{ anidex_torrents|sum(attribute='seeder_count') }}</td>
+                      <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='seeder_count'), anidex_torrents|length) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Leechers</td>
+                      <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='leecher_count') }}</td>
+                      <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='leecher_count'), nyaa_si_torrents|length) }}</td>
+                      <td class='text-center'>{{ anidex_torrents|sum(attribute='leecher_count') }}</td>
+                      <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='leecher_count'), anidex_torrents|length) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Comments</td>
+                      <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='comment_count') }}</td>
+                      <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='comment_count'), nyaa_si_torrents|length) }}</td>
+                      <td class='text-center'>{{ anidex_torrents|sum(attribute='comment_count') }}</td>
+                      <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='comment_count'), anidex_torrents|length) }}</td>
+                    </tr>
+                  </tbody>
+                  <tbody>
+                    <tr>
+                      <td>Torrents</td>
+                      <td class='text-center' colspan='2'>
+                        {{- nyaa_si_torrents|length }} (visible: {{ nyaa_si_torrents|selectattr('visible', 'equalto', True)|list|length }}) {#- -#}
+                      </td>
+                      <td class='text-center' colspan='2'>
+                        {{- anidex_torrents|length }} (visible: {{ anidex_torrents|selectattr('visible', 'equalto', True)|list|length }}) {#- -#}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <h2>Transmission</h2>
+                <table class='table table-sm'>
+                  <thead class='thead-light'>
+                    <tr>
+                      <th>Subject</th>
+                      <th class='text-center'>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Uptime</td>
+                      <td class='text-center'>
+                        {%- if torrent_stats -%}
+                          {{ torrent_stats.uptime }}
+                        {%- else -%}
+                          ?
+                        {%- endif -%}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Uploaded</td>
+                      <td class='text-center'>
+                        {%- if torrent_stats -%}
+                          {{ torrent_stats.uploaded_bytes|filesizeformat }}
+                        {%- else -%}
+                          ?
+                        {%- endif -%}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Downloaded</td>
+                      <td class='text-center'>
+                        {%- if torrent_stats -%}
+                          {{ torrent_stats.downloaded_bytes|filesizeformat }}
+                        {%- else -%}
+                          ?
+                        {%- endif -%}
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tbody>
+                    <tr>
+                      <td>Torrents</td>
+                      <td class='text-center'>
+                        {%- if torrent_stats -%}
+                          {{ torrent_stats.torrents }} (active: {{ torrent_stats.active_torrents }})
+                        {%- else -%}
+                          ?
+                        {%- endif -%}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class='row justify-content-center'>
+              {%- set max_comments = 5 -%}
+              {%- set max_requests = 15 -%}
+
+              <div class='col-lg-8 col-12'>
+                <h2>Recent comments</h2>
+                <p><small>Showing {{ comments[:max_comments]|length }} out of {{ comments|length }}</small></p>
+                <ul class='list-unstyled comments'>
+                  {%- for comment in comments[:max_comments] -%}
+                    {{- render_comment(comment)|indent(8, True) -}}
+                  {%- endfor %}
+                </ul>
+              </div>
+
+              <div class='col-lg-4 col-12'>
+                <h2>Recent requests</h2>
+                <p><small>Showing {{ torrent_requests[:max_requests]|length }} out of {{ torrent_requests|length }}</small></p>
+                <ul class='requests'>
+                  {%- for request in torrent_requests[:max_requests] -%}
+                    {{- render_request(request)|indent(8, True) -}}
+                  {%- endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class='tab-pane fade' id='comments' role='tabpanel' aria-labelledby='comments-tab'>
+            <h2>All comments</h2>
+            <ul class='list-unstyled comments'>
+              {%- for comment in comments -%}
+                {{- render_comment(comment)|indent(8, True) -}}
+              {%- endfor %}
+            </ul>
+          </div>
+
+          <div class='tab-pane fade' id='requests' role='tabpanel' aria-labelledby='requests-tab'>
+            <h2>All requests</h2>
+            <ul class='requests'>
+              {%- for request in torrent_requests -%}
+                {{- render_request(request)|indent(8, True) -}}
+              {%- endfor %}
+            </ul>
+          </div>
         </div>
-
-        <div class='comments'>
-          <h2>Latest comments</h2>
-          <ul class='list-unstyled'>
-            {%- for comment in comments|sort(attribute='comment_date', reverse=True) -%}
-              {{- render_comment(comment)|indent(10, True) -}}
-            {%- endfor %}
-          </ul>
-        </div>
-      </div>
-
-      <div class='col-lg-3 col-12'>
-        <h2>Nyaa.si</h2>
-        <table class='table table-sm'>
-          <thead class='thead-light'>
-            <tr>
-              <th>Subject</th>
-              <th class='text-center'>Total</th>
-              <th class='text-center'>Average</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Downloads</td>
-              <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='download_count') }}</td>
-              <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='download_count'), nyaa_si_torrents|length) }}</td>
-            </tr>
-            <tr>
-              <td>Seeders</td>
-              <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='seeder_count') }}</td>
-              <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='seeder_count'), nyaa_si_torrents|length) }}</td>
-            </tr>
-            <tr>
-              <td>Leechers</td>
-              <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='leecher_count') }}</td>
-              <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='leecher_count'), nyaa_si_torrents|length) }}</td>
-            </tr>
-            <tr>
-              <td>Comments</td>
-              <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='comment_count') }}</td>
-              <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='comment_count'), nyaa_si_torrents|length) }}</td>
-            </tr>
-          </tbody>
-          <tbody>
-            <tr>
-              <td>Torrents</td>
-              <td class='text-center' colspan='2'>
-                {{- nyaa_si_torrents|length }} (visible: {{ nyaa_si_torrents|selectattr('visible', 'equalto', True)|list|length }}) {#- -#}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        {% set anidex_torrents = torrents|selectattr('source', 'equalto', 'anidex.info')|list %}
-        <h2>Anidex.info</h2>
-        <table class='table table-sm'>
-          <thead class='thead-light'>
-            <tr>
-              <th>Subject</th>
-              <th class='text-center'>Total</th>
-              <th class='text-center'>Average</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Downloads</td>
-              <td class='text-center'>{{ anidex_torrents|sum(attribute='download_count') }}</td>
-              <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='download_count'), anidex_torrents|length) }}</td>
-            </tr>
-            <tr>
-              <td>Seeders</td>
-              <td class='text-center'>{{ anidex_torrents|sum(attribute='seeder_count') }}</td>
-              <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='seeder_count'), anidex_torrents|length) }}</td>
-            </tr>
-            <tr>
-              <td>Leechers</td>
-              <td class='text-center'>{{ anidex_torrents|sum(attribute='leecher_count') }}</td>
-              <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='leecher_count'), anidex_torrents|length) }}</td>
-            </tr>
-            <tr>
-              <td>Comments</td>
-              <td class='text-center'>{{ anidex_torrents|sum(attribute='comment_count') }}</td>
-              <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='comment_count'), anidex_torrents|length) }}</td>
-            </tr>
-          </tbody>
-          <tbody>
-            <tr>
-              <td>Torrents</td>
-              <td class='text-center' colspan='2'>
-                {{- anidex_torrents|length }} (visible: {{ anidex_torrents|selectattr('visible', 'equalto', True)|list|length }}) {#- -#}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h2>Transmission</h2>
-        <table class='table table-sm'>
-          <thead class='thead-light'>
-            <tr>
-              <th>Subject</th>
-              <th class='text-center'>Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Uptime</td>
-              <td class='text-center'>
-                {%- if torrent_stats -%}
-                  {{ torrent_stats.uptime }}
-                {%- else -%}
-                  ?
-                {%- endif -%}
-              </td>
-            </tr>
-            <tr>
-              <td>Uploaded</td>
-              <td class='text-center'>
-                {%- if torrent_stats -%}
-                  {{ torrent_stats.uploaded_bytes|filesizeformat }}
-                {%- else -%}
-                  ?
-                {%- endif -%}
-              </td>
-            </tr>
-            <tr>
-              <td>Downloaded</td>
-              <td class='text-center'>
-                {%- if torrent_stats -%}
-                  {{ torrent_stats.downloaded_bytes|filesizeformat }}
-                {%- else -%}
-                  ?
-                {%- endif -%}
-              </td>
-            </tr>
-          </tbody>
-          <tbody>
-            <tr>
-              <td>Torrents</td>
-              <td class='text-center'>
-                {%- if torrent_stats -%}
-                  {{ torrent_stats.torrents }} (active: {{ torrent_stats.active_torrents }})
-                {%- else -%}
-                  ?
-                {%- endif -%}
-              </td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </section>
   </main>
+
+  <script src='https://bootswatch.com/_vendor/jquery/dist/jquery.min.js'></script>
+  <script src='https://bootswatch.com/_vendor/bootstrap/dist/js/bootstrap.min.js'></script>
+  <script src='https://d3js.org/d3.v4.min.js'></script>
+  <script>var hits = {{ hits|tojson|safe }};</script>
+  <script>var downloads = {{ downloads|tojson|safe }};</script>
+  <script>{% include 'report-daily-stats.js' %}</script>
 </body>
 </html>
