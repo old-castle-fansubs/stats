@@ -36,6 +36,7 @@ def main() -> None:
             daily_stats={},
         )
 
+    DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
     for _ in refresh_data(data, args.dev):
         DATA_PATH.write_text(data.to_json(indent=4))
 

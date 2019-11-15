@@ -10,7 +10,7 @@ from oc_stats import anidex, dedibox, neocities, nyaa_si
 from oc_stats.common import ROOT_PATH, json_date_metadata
 
 logger = logging.getLogger(__name__)
-DATA_PATH = ROOT_PATH.parent / "cache.json"
+DATA_PATH = ROOT_PATH.parent / "cache" / "data.json"
 
 
 @dataclass_json
