@@ -21,7 +21,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    logging.basicConfig()
+    logging.basicConfig(level=logging.DEBUG)
     args = parse_args()
 
     if DATA_PATH.exists():

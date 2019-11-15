@@ -6,12 +6,10 @@ import typing as T
 
 from dataclasses_json import dataclass_json
 
+from oc_stats import anidex, dedibox, neocities, nyaa_si
 from oc_stats.common import ROOT_PATH, json_date_metadata
 
-from . import anidex, dedibox, neocities, nyaa_si
-
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 DATA_PATH = ROOT_PATH.parent / "cache.json"
 
 
