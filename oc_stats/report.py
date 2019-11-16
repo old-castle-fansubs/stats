@@ -47,11 +47,23 @@ class SmoothedStat:
 
 
 @dataclasses.dataclass
+class AnimeRequest:
+    date: T.Optional[datetime.datetime]
+    title: str
+    link: str
+    comment: str
+    picture: T.Optional[str]
+    synopsis: T.Optional[str]
+    type: T.Optional[str]
+    episodes: T.Optional[int]
+
+
+@dataclasses.dataclass
 class ReportContext:
     date: datetime.datetime
     comments: T.List[BaseComment]
     torrents: T.List[BaseTorrent]
-    anime_requests: T.List[dedibox.AnimeRequest]
+    anime_requests: T.List[AnimeRequest]
     torrent_stats: dedibox.TorrentStats
     hits: T.List[SmoothedStat]
     downloads: T.List[SmoothedStat]
@@ -104,6 +116,30 @@ def build_report_context(data: T.Any) -> ReportContext:
         ]
     )
 
+    anime_requests: T.List[AnimeRequest] = []
+    for request in data.anime_requests:
+        anidb_info = (
+            data.anidb_titles[request.anidb_id] if request.anidb_id else None
+        )
+        anime_requests.append(
+            AnimeRequest(
+                date=request.date,
+                title=anidb_info.title if anidb_info else request.title,
+                link=request.link,
+                comment=request.comment,
+                synopsis=anidb_info.synopsis if anidb_info else None,
+                type=anidb_info.type if anidb_info else None,
+                picture=f"anidb/{anidb_info.id}.jpg" if anidb_info else None,
+                episodes=anidb_info.episodes if anidb_info else None,
+            )
+        )
+    anime_requests.sort(
+        key=lambda request: request.date.replace(tzinfo=None)
+        if request.date
+        else datetime.datetime.min,
+        reverse=True,
+    )
+
     return ReportContext(
         date=datetime.datetime.now(),
         comments=list(
@@ -114,7 +150,7 @@ def build_report_context(data: T.Any) -> ReportContext:
             )
         ),
         torrents=list(torrents.values()),
-        anime_requests=list(reversed(data.anime_requests)),
+        anime_requests=anime_requests,
         torrent_stats=daily_stats[-1].torrent_stats if daily_stats else None,
         hits=hits,
         downloads=downloads,

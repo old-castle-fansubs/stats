@@ -219,7 +219,7 @@
 
             <div class='row justify-content-center'>
               {%- set max_comments = 5 -%}
-              {%- set max_requests = 15 -%}
+              {%- set max_requests = 9 -%}
 
               <div class='col-lg-8 col-12'>
                 <h2>Recent comments</h2>
@@ -234,9 +234,18 @@
               <div class='col-lg-4 col-12'>
                 <h2>Recent requests</h2>
                 <p><small>Showing {{ anime_requests[:max_requests]|length }} out of {{ anime_requests|length }}</small></p>
-                <ul class='requests'>
+                <ul class='requests-lite'>
                   {%- for request in anime_requests[:max_requests] -%}
-                    {{- render_request(request)|indent(8, True) -}}
+                    <li>
+                      <a href='{{ request.link }}'>
+                        {% if request.picture -%}
+                          <img src='{{ request.picture }}' alt='{{ request.title }}'/>
+                        {%- else -%}
+                          <img src='img/unknown.jpg' alt='Unknown image'/>
+                        {%- endif %}
+                        <span>{{ request.title }}</span>
+                      </a>
+                    </li>
                   {%- endfor %}
                 </ul>
               </div>
