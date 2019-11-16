@@ -9,11 +9,10 @@ from pathlib import Path
 import jinja2
 import numpy as np
 
-from oc_stats.common import ROOT_PATH, BaseComment, BaseTorrent
+from oc_stats import dedibox
+from oc_stats.common import ROOT_DIR, BaseComment, BaseTorrent
 from oc_stats.data import Data
 from oc_stats.markdown import render_markdown
-
-from . import dedibox
 
 
 def smooth(source: np.array) -> np.array:
@@ -130,16 +129,19 @@ def percent(
     return f"{dividend / divisor:.2f}"
 
 
-def write_report(output: Path, data: Data) -> None:
-    print(f"Writing output to {output}…", file=sys.stderr)
+def write_report(output_dir: Path, data: Data) -> None:
+    print(f"Writing output to {output_dir}…", file=sys.stderr)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(str(ROOT_PATH / "data"))
+        loader=jinja2.FileSystemLoader(str(ROOT_DIR / "data"))
     )
     env.filters["markdown"] = lambda text: render_markdown(text)
     env.filters["tojson"] = lambda obj: json.dumps(obj, default=json_default)
     env.globals.update(percent=percent)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(
+
+    index_path = output_dir / "index.html"
+    index_path.write_text(
         env.get_template("report.html").render(
             **dataclasses.asdict(build_report_context(data))
         )

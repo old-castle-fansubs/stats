@@ -5,7 +5,8 @@ from pathlib import Path
 
 import dateutil.parser
 
-ROOT_PATH = Path(__file__).parent
+ROOT_DIR = Path(__file__).parent
+CACHE_DIR = ROOT_DIR.parent / "cache"
 
 json_date_metadata = {
     "dataclasses_json": {

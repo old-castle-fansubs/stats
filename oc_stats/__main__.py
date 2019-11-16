@@ -14,7 +14,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("-d", "--dev", action="store_true")
     parser.add_argument(
-        "-o", "--output", default=Path("stats.html"), type=Path, required=False
+        "-o", "--output-dir", default=Path("build"), type=Path, required=False
     )
 
     return parser.parse_known_args()[0]
@@ -40,7 +40,7 @@ def main() -> None:
     for _ in refresh_data(data, args.dev):
         DATA_PATH.write_text(data.to_json(indent=4))
 
-    write_report(args.output, data)
+    write_report(args.output_dir, data)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ import lxml.html
 import requests
 from dataclasses_json import dataclass_json
 
-from .common import BaseTrafficStat
+from oc_stats.common import BaseTrafficStat
 
 NEOCITIES_USER = os.environ["NEOCITIES_USER"]
 NEOCITIES_PASS = os.environ["NEOCITIES_PASS"]

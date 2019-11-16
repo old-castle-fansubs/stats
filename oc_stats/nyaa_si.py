@@ -6,8 +6,8 @@ import humanfriendly
 import lxml.html
 import requests
 
-from .common import BaseComment as Comment
-from .common import BaseTorrent as Torrent
+from oc_stats.common import BaseComment as Comment
+from oc_stats.common import BaseTorrent as Torrent
 
 NYAA_SI_USER = os.environ["NYAA_SI_USER"]
 NYAA_SI_PASS = os.environ["NYAA_SI_PASS"]
