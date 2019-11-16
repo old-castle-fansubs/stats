@@ -172,7 +172,7 @@ def get_traffic_stats() -> T.Iterable[TrafficStat]:
         request = match.group("request")
         status = int(match.group("status"))
 
-        if "/stats.html" in request:
+        if "/stats" in request:
             continue
 
         if status in {400, 404}:
