@@ -51,7 +51,7 @@ class ReportContext:
     date: datetime.datetime
     comments: T.List[BaseComment]
     torrents: T.List[BaseTorrent]
-    torrent_requests: T.List[dedibox.TorrentRequest]
+    anime_requests: T.List[dedibox.AnimeRequest]
     torrent_stats: dedibox.TorrentStats
     hits: T.List[SmoothedStat]
     downloads: T.List[SmoothedStat]
@@ -114,7 +114,7 @@ def build_report_context(data: T.Any) -> ReportContext:
             )
         ),
         torrents=list(torrents.values()),
-        torrent_requests=list(reversed(data.torrent_requests)),
+        anime_requests=list(reversed(data.anime_requests)),
         torrent_stats=daily_stats[-1].torrent_stats if daily_stats else None,
         hits=hits,
         downloads=downloads,

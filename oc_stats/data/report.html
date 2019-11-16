@@ -34,7 +34,7 @@
 
 {%- macro render_request(request) %}
   <li>
-    {#- -#} <a href='{{ request.anidb_link }}'>{{ request.title }}</a>
+    {#- -#} <a href='{{ request.link }}'>{{ request.title }}</a>
     {%- if request.date -%}
       {#- #} <small>({{ request.date.strftime('%Y-%m-%d') }})</small>
     {%- endif -%}
@@ -233,9 +233,9 @@
 
               <div class='col-lg-4 col-12'>
                 <h2>Recent requests</h2>
-                <p><small>Showing {{ torrent_requests[:max_requests]|length }} out of {{ torrent_requests|length }}</small></p>
+                <p><small>Showing {{ anime_requests[:max_requests]|length }} out of {{ anime_requests|length }}</small></p>
                 <ul class='requests'>
-                  {%- for request in torrent_requests[:max_requests] -%}
+                  {%- for request in anime_requests[:max_requests] -%}
                     {{- render_request(request)|indent(8, True) -}}
                   {%- endfor %}
                 </ul>
@@ -255,7 +255,7 @@
           <div class='tab-pane fade' id='requests' role='tabpanel' aria-labelledby='requests-tab'>
             <h2>All requests</h2>
             <ul class='requests'>
-              {%- for request in torrent_requests -%}
+              {%- for request in anime_requests -%}
                 {{- render_request(request)|indent(8, True) -}}
               {%- endfor %}
             </ul>

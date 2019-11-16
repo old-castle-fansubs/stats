@@ -52,17 +52,20 @@ class TorrentStats:
 
 @dataclass_json
 @dataclasses.dataclass
-class TorrentRequest:
+class AnimeRequest:
     date: T.Optional[datetime] = dataclasses.field(
         metadata=json_datetime_metadata
     )
     title: str
-    anidb_link: str
+    link: str
     comment: T.Optional[str]
 
     @property
-    def anidb_id(self) -> int:
-        return int(re.search(r"(\d+)", self.anidb_link).group(1))
+    def anidb_id(self) -> T.Optional[int]:
+        match = re.search(r"(\d+)", self.link)
+        if not match:
+            return None
+        return int(match.group(1))
 
 
 def get_torrent_stats() -> TorrentStats:
@@ -121,7 +124,7 @@ def list_guestbook_comments() -> T.Iterable[Comment]:
         )
 
 
-def list_torrent_requests() -> T.Iterable[TorrentRequest]:
+def list_anime_requests() -> T.Iterable[AnimeRequest]:
     content = subprocess.run(
         ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/requests.json"],
         check=True,
@@ -130,10 +133,10 @@ def list_torrent_requests() -> T.Iterable[TorrentRequest]:
 
     items = json.loads(content)
     for item in items:
-        yield TorrentRequest(
+        yield AnimeRequest(
             date=dateutil.parser.parse(item["date"]) if item["date"] else None,
             title=item["title"],
-            anidb_link=item["anidb_link"],
+            link=item["anidb_link"],
             comment=item["comment"],
         )
 

@@ -27,7 +27,7 @@ class DailyStat:
 @dataclasses.dataclass
 class Data:
     guestbook_comments: T.List[dedibox.Comment]
-    torrent_requests: T.List[dedibox.TorrentRequest]
+    anime_requests: T.List[dedibox.AnimeRequest]
     nyaa_si_torrents: T.List[nyaa_si.Torrent]
     nyaa_si_comments: T.Dict[int, T.List[nyaa_si.Comment]]
     anidex_torrents: T.List[anidex.Torrent]
@@ -53,20 +53,21 @@ def refresh_data(data: Data, dev: bool) -> T.Iterable[None]:
             data.guestbook_comments = list(dedibox.list_guestbook_comments())
             yield
 
-    if not dev or not data.torrent_requests:
+    if not dev or not data.anime_requests:
         logger.info("Getting request list…")
         with exception_guard():
-            data.torrent_requests = list(dedibox.list_torrent_requests())
+            data.anime_requests = list(dedibox.list_anime_requests())
             yield
 
     if not dev or not data.anidb_titles:
         logger.info("Getting AniDB entries…")
         with exception_guard():
             data.anidb_titles = {}
-            for request in data.torrent_requests:
-                data.anidb_titles[request.anidb_id] = anidb.get_anidb_info(
-                    request.anidb_id
-                )
+            for request in data.anime_requests:
+                if request.anidb_id:
+                    data.anidb_titles[request.anidb_id] = anidb.get_anidb_info(
+                        request.anidb_id
+                    )
             yield
 
     if not dev or not data.nyaa_si_torrents:
