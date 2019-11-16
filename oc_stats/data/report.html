@@ -34,14 +34,31 @@
 
 {%- macro render_request(request) %}
   <li>
-    {#- -#} <a href='{{ request.link }}'>{{ request.title }}</a>
-    {%- if request.date -%}
-      {#- #} <small>({{ request.date.strftime('%Y-%m-%d') }})</small>
-    {%- endif -%}
-
-    {%- if request.comment -%}
-      {{ request.comment|markdown }}
-    {%- endif -%}
+    <div class='card'>
+      <div class='card-body bg-light'>
+        <a href='{{ request.link }}'>
+          {% if request.picture -%}
+            <img src='{{ request.picture }}' alt='{{ request.title }}'/>
+          {%- else -%}
+            <img src='img/unknown.jpg' alt='Unknown image'/>
+          {%- endif %}
+        </a>
+        <div>
+          <a href='{{ request.link }}'>{{ request.title }}</a>
+          {%- if request.date -%}
+            {#- #} <small>requested on ({{ request.date.strftime('%Y-%m-%d') }})</small>
+          {%- endif %}
+          <p>{{ request.type }}, {{ request.episodes }} episode(s)</p>
+          <p>
+            {{ request.synopsis|indent(12, False) }}
+          </p>
+          {% if request.comment -%}
+            <p><strong>Comment from the requester:</strong></p>
+            {{ request.comment|markdown }}
+          {%- endif %}
+        </div>
+      </div>
+    </div>
   </li>
 {%- endmacro -%}
 
@@ -226,7 +243,7 @@
                 <p><small>Showing {{ comments[:max_comments]|length }} out of {{ comments|length }}</small></p>
                 <ul class='list-unstyled comments'>
                   {%- for comment in comments[:max_comments] -%}
-                    {{- render_comment(comment)|indent(8, True) -}}
+                    {{- render_comment(comment)|indent(16, True) -}}
                   {%- endfor %}
                 </ul>
               </div>
@@ -256,7 +273,7 @@
             <h2>All comments</h2>
             <ul class='list-unstyled comments'>
               {%- for comment in comments -%}
-                {{- render_comment(comment)|indent(8, True) -}}
+                {{- render_comment(comment)|indent(12, True) -}}
               {%- endfor %}
             </ul>
           </div>

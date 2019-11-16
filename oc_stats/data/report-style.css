@@ -107,6 +107,33 @@ h2 {
   margin-bottom: 0;
 }
 
+.requests {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 2fr);
+  grid-column-gap: 1em;
+  grid-row-gap: 1em;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+.requests .card-body {
+  display: flex;
+}
+.requests p {
+  word-wrap: break-word;
+}
+.requests .card-body>a {
+  flex: 1;
+  align-self: start;
+  margin-right: 1em;
+}
+.requests .card-body>a>img {
+  width: 100%;
+}
+.requests .card-body>div {
+  flex: 3;
+}
+
 .requests-lite {
   font-size: smaller;
   list-style-type: none;
