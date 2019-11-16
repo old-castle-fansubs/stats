@@ -60,6 +60,10 @@ class TorrentRequest:
     anidb_link: str
     comment: T.Optional[str]
 
+    @property
+    def anidb_id(self) -> int:
+        return int(re.search(r"(\d+)", self.anidb_link).group(1))
+
 
 def get_torrent_stats() -> TorrentStats:
     transmission_tunnel = sshtunnel.SSHTunnelForwarder(

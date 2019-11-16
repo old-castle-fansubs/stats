@@ -34,6 +34,7 @@ def main() -> None:
             nyaa_si_comments={},
             anidex_torrents=[],
             daily_stats={},
+            anidb_titles={},
         )
 
     DATA_PATH.parent.mkdir(parents=True, exist_ok=True)

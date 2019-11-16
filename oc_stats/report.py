@@ -10,7 +10,7 @@ import jinja2
 import numpy as np
 
 from oc_stats import dedibox
-from oc_stats.common import ROOT_DIR, BaseComment, BaseTorrent
+from oc_stats.common import CACHE_DIR, ROOT_DIR, BaseComment, BaseTorrent
 from oc_stats.data import Data
 from oc_stats.markdown import render_markdown
 
@@ -146,3 +146,7 @@ def write_report(output_dir: Path, data: Data) -> None:
             **dataclasses.asdict(build_report_context(data))
         )
     )
+
+    anidb_path = output_dir / "anidb"
+    if not anidb_path.exists():
+        anidb_path.symlink_to(CACHE_DIR / "anidb", target_is_directory=True)

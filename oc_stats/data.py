@@ -6,7 +6,7 @@ import typing as T
 
 from dataclasses_json import dataclass_json
 
-from oc_stats import anidex, dedibox, neocities, nyaa_si
+from oc_stats import anidb, anidex, dedibox, neocities, nyaa_si
 from oc_stats.common import CACHE_DIR, json_date_metadata
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,9 @@ class Data:
     nyaa_si_comments: T.Dict[int, T.List[nyaa_si.Comment]]
     anidex_torrents: T.List[anidex.Torrent]
     daily_stats: T.List[DailyStat] = dataclasses.field(default_factory=list)
+    anidb_titles: T.Dict[int, anidb.AniDBInfo] = dataclasses.field(
+        default_factory=dict
+    )
 
 
 @contextlib.contextmanager
@@ -54,6 +57,16 @@ def refresh_data(data: Data, dev: bool) -> T.Iterable[None]:
         logger.info("Getting request list…")
         with exception_guard():
             data.torrent_requests = list(dedibox.list_torrent_requests())
+            yield
+
+    if not dev or not data.anidb_titles:
+        logger.info("Getting AniDB entries…")
+        with exception_guard():
+            data.anidb_titles = {}
+            for request in data.torrent_requests:
+                data.anidb_titles[request.anidb_id] = anidb.get_anidb_info(
+                    request.anidb_id
+                )
             yield
 
     if not dev or not data.nyaa_si_torrents:
