@@ -4,6 +4,7 @@ import os
 import time
 import typing as T
 from dataclasses import dataclass
+from pathlib import Path
 from xml.etree import ElementTree
 
 import dateutil.parser
@@ -32,7 +33,17 @@ class AniDBInfo:
     )
 
 
-def get_anidb_info(anime_id) -> AniDBInfo:
+class XmlParser:
+    def __init__(self, path: Path) -> None:
+        self.doc = ElementTree.parse(str(path)).getroot()
+
+    def get_text(self, xpath: str) -> str:
+        node = self.doc.find(xpath)
+        assert node is not None
+        return node.text or ""
+
+
+def get_anidb_info(anime_id: int) -> AniDBInfo:
     entry_cache_path = CACHE_DIR / "anidb" / f"{anime_id}.xml"
     image_cache_path = CACHE_DIR / "anidb" / f"{anime_id}.jpg"
 
@@ -49,10 +60,10 @@ def get_anidb_info(anime_id) -> AniDBInfo:
         entry_cache_path.write_text(response.text)
         content = response.text
 
-    doc = ElementTree.parse(entry_cache_path).getroot()
+    doc = XmlParser(entry_cache_path)
 
-    image_url = (
-        "http://cdn.anidb.net/images/main/" + doc.find(".//picture").text
+    image_url = "http://cdn.anidb.net/images/main/" + doc.get_text(
+        ".//picture"
     )
     if not image_cache_path.exists():
         response = requests.get(image_url)
@@ -62,10 +73,10 @@ def get_anidb_info(anime_id) -> AniDBInfo:
 
     return AniDBInfo(
         id=anime_id,
-        title=doc.find(".//title").text,
-        type=doc.find(".//type").text,
-        episodes=int(doc.find(".//episodecount").text),
-        synopsis=doc.find(".//description").text,
-        start_date=dateutil.parser.parse(doc.find(".//startdate").text).date(),
-        end_date=dateutil.parser.parse(doc.find(".//enddate").text).date(),
+        title=doc.get_text(".//title"),
+        type=doc.get_text(".//type"),
+        episodes=int(doc.get_text(".//episodecount")),
+        synopsis=doc.get_text(".//description"),
+        start_date=dateutil.parser.parse(doc.get_text(".//startdate")).date(),
+        end_date=dateutil.parser.parse(doc.get_text(".//enddate")).date(),
     )

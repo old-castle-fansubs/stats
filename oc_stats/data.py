@@ -38,7 +38,7 @@ class Data:
 
 
 @contextlib.contextmanager
-def exception_guard() -> T.Generator:
+def exception_guard() -> T.Iterator[None]:
     try:
         yield
     except Exception as ex:
@@ -136,8 +136,8 @@ def refresh_data(data: Data, dev: bool) -> T.Iterable[None]:
             neocities_traffic_stats = list(neocities.get_traffic_stats())
 
             min_date = min(
-                stat.day
-                for stat in dedibox_traffic_stats + neocities_traffic_stats
+                [stat.day for stat in dedibox_traffic_stats]
+                + [stat.day for stat in neocities_traffic_stats]
             )
 
             day = min_date

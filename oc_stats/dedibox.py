@@ -1,5 +1,6 @@
 import collections
 import dataclasses
+import datetime
 import hashlib
 import io
 import json
@@ -7,7 +8,6 @@ import os
 import re
 import subprocess
 import typing as T
-from datetime import datetime, timedelta, timezone
 
 import dateutil.parser
 import sshtunnel
@@ -47,13 +47,15 @@ class TorrentStats:
     active_torrents: int
     downloaded_bytes: int
     uploaded_bytes: int
-    uptime: timedelta = dataclasses.field(metadata=json_timedelta_metadata)
+    uptime: datetime.timedelta = dataclasses.field(
+        metadata=json_timedelta_metadata
+    )
 
 
 @dataclass_json
 @dataclasses.dataclass
 class AnimeRequest:
-    date: T.Optional[datetime] = dataclasses.field(
+    date: T.Optional[datetime.datetime] = dataclasses.field(
         metadata=json_datetime_metadata
     )
     title: str
@@ -90,7 +92,9 @@ def get_torrent_stats() -> TorrentStats:
         active_torrents=stats.activeTorrentCount,
         downloaded_bytes=stats.cumulative_stats["downloadedBytes"],
         uploaded_bytes=stats.cumulative_stats["uploadedBytes"],
-        uptime=timedelta(seconds=stats.cumulative_stats["secondsActive"]),
+        uptime=datetime.timedelta(
+            seconds=stats.cumulative_stats["secondsActive"]
+        ),
     )
 
     transmission_tunnel.close()
@@ -115,7 +119,7 @@ def list_guestbook_comments() -> T.Iterable[Comment]:
             source="guestbook",
             website_link=f"https://oldcastle.moe/guest_book.html#comment-{item['id']}",
             comment_date=dateutil.parser.parse(item["created"]).replace(
-                tzinfo=timezone.utc
+                tzinfo=datetime.timezone.utc
             ),
             author_name=item["author"],
             author_avatar_url=avatar_url,

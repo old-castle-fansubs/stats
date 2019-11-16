@@ -79,9 +79,8 @@ def _make_torrent(row: lxml.html.HtmlElement) -> Torrent:
         magnet_link=row.xpath('.//a[contains(@href, "magnet")]/@href')[0],
         size=humanfriendly.parse_size(row.xpath(".//td[4]/text()")[0]),
         upload_date=datetime.datetime(
-            *humanfriendly.parse_date(row.xpath(".//td[5]/text()")[0]),
-            tzinfo=datetime.timezone.utc,
-        ).replace(),
+            *humanfriendly.parse_date(row.xpath(".//td[5]/text()")[0])
+        ).replace(tzinfo=datetime.timezone.utc),
         seeder_count=int(row.xpath(".//td[6]/text()")[0]),
         leecher_count=int(row.xpath(".//td[7]/text()")[0]),
         download_count=int(row.xpath(".//td[8]/text()")[0]),
@@ -101,9 +100,8 @@ def _make_comment(torrent: Torrent, row: lxml.html.HtmlElement) -> Comment:
                     './/div[contains(@class, "comment-details")]'
                     "//small/text()"
                 )[0]
-            ),
-            tzinfo=datetime.timezone.utc,
-        ),
+            )
+        ).replace(tzinfo=datetime.timezone.utc),
         author_name=row.xpath('.//a[contains(@href, "/user/")]/text()')[0],
         author_avatar_url=row.xpath('.//img[@class="avatar"]/@src')[0],
         text=row.xpath(".//div[@markdown-text]/text()")[0],

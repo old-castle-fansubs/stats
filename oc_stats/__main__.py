@@ -29,11 +29,11 @@ def main() -> None:
     else:
         data = Data(
             guestbook_comments=[],
-            torrent_requests=[],
+            anime_requests=[],
             nyaa_si_torrents=[],
             nyaa_si_comments={},
             anidex_torrents=[],
-            daily_stats={},
+            daily_stats=[],
             anidb_titles={},
         )
 
