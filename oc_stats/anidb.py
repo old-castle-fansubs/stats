@@ -1,12 +1,16 @@
+import dataclasses
+import datetime
 import os
 import time
+import typing as T
 from dataclasses import dataclass
 from xml.etree import ElementTree
 
+import dateutil.parser
 import requests
 from dataclasses_json import dataclass_json
 
-from oc_stats.common import CACHE_DIR
+from oc_stats.common import CACHE_DIR, json_date_metadata
 
 ANIDB_CLIENT = os.environ["ANIDB_CLIENT"]
 ANIDB_CLIENTVER = os.environ["ANIDB_CLIENTVER"]
@@ -20,6 +24,12 @@ class AniDBInfo:
     type: str
     episodes: int
     synopsis: str
+    start_date: T.Optional[datetime.date] = dataclasses.field(
+        metadata=json_date_metadata
+    )
+    end_date: T.Optional[datetime.date] = dataclasses.field(
+        metadata=json_date_metadata
+    )
 
 
 def get_anidb_info(anime_id) -> AniDBInfo:
@@ -56,4 +66,6 @@ def get_anidb_info(anime_id) -> AniDBInfo:
         type=doc.find(".//type").text,
         episodes=int(doc.find(".//episodecount").text),
         synopsis=doc.find(".//description").text,
+        start_date=dateutil.parser.parse(doc.find(".//startdate").text).date(),
+        end_date=dateutil.parser.parse(doc.find(".//enddate").text).date(),
     )

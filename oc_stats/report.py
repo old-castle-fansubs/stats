@@ -56,6 +56,7 @@ class AnimeRequest:
     synopsis: T.Optional[str]
     type: T.Optional[str]
     episodes: T.Optional[int]
+    year: T.Optional[int]
 
 
 @dataclasses.dataclass
@@ -131,6 +132,9 @@ def build_report_context(data: T.Any) -> ReportContext:
                 type=anidb_info.type if anidb_info else None,
                 picture=f"anidb/{anidb_info.id}.jpg" if anidb_info else None,
                 episodes=anidb_info.episodes if anidb_info else None,
+                year=anidb_info.start_date.year
+                if anidb_info and anidb_info.start_date
+                else None,
             )
         )
     anime_requests.sort(
