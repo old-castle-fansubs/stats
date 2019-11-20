@@ -55,6 +55,10 @@
                   <h2>Daily stats</h2>
                   <div class='target'></div>
                 </div>
+
+                <h2>Recent comments</h2>
+                <p><small>Showing {{ comments[:max_comments]|length }} out of {{ comments|length }}</small></p>
+                {{- comment_macros.render_comments(comments[:max_comments])|indent(14, True) }}
               </div>
 
               <div class='general col-xl-4 col-12'>
@@ -63,17 +67,7 @@
 
                 <h2>Transmission</h2>
                 {{- transmission_macros.render_torrent_stats(torrent_stats)|indent(14, True) }}
-              </div>
-            </div>
 
-            <div class='row justify-content-center'>
-              <div class='col-lg-8 col-12'>
-                <h2>Recent comments</h2>
-                <p><small>Showing {{ comments[:max_comments]|length }} out of {{ comments|length }}</small></p>
-                {{- comment_macros.render_comments(comments[:max_comments])|indent(14, True) }}
-              </div>
-
-              <div class='col-lg-4 col-12'>
                 <h2>Recent requests</h2>
                 <p><small>Showing {{ anime_requests[:max_requests]|length }} out of {{ anime_requests|length }}</small></p>
                 <ul class='requests-lite'>
