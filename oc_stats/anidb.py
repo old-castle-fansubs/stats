@@ -43,6 +43,10 @@ class XmlParser:
         return node.text or ""
 
 
+def process_synopsis(synopsis: str) -> str:
+    return synopsis.replace("http", " http")
+
+
 def get_anidb_info(anime_id: int) -> AniDBInfo:
     entry_cache_path = CACHE_DIR / "anidb" / f"{anime_id}.xml"
     image_cache_path = CACHE_DIR / "anidb" / f"{anime_id}.jpg"
@@ -76,7 +80,7 @@ def get_anidb_info(anime_id: int) -> AniDBInfo:
         title=doc.get_text(".//title"),
         type=doc.get_text(".//type"),
         episodes=int(doc.get_text(".//episodecount")),
-        synopsis=doc.get_text(".//description"),
+        synopsis=process_synopsis(doc.get_text(".//description")),
         start_date=dateutil.parser.parse(doc.get_text(".//startdate")).date(),
         end_date=dateutil.parser.parse(doc.get_text(".//enddate")).date(),
     )
