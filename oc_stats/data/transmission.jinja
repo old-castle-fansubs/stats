@@ -1,0 +1,116 @@
+{%- macro render_torrents(torrents) %}
+  {% set nyaa_si_torrents = torrents|selectattr('source', 'equalto', 'nyaa.si')|list -%}
+  {%- set anidex_torrents = torrents|selectattr('source', 'equalto', 'anidex.info')|list -%}
+
+  <table class='table table-sm'>
+    <thead class='thead-light'>
+      <tr>
+        <th rowspan='2'></th>
+        <th class='text-center' colspan='2'>nyaa.si</th>
+        <th class='text-center' colspan='2'>anidex</th>
+      </tr>
+      <tr>
+        <th class='text-center'>Total</th>
+        <th class='text-center'>Average</th>
+        <th class='text-center'>Total</th>
+        <th class='text-center'>Average</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Downloads</td>
+        <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='download_count') }}</td>
+        <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='download_count'), nyaa_si_torrents|length) }}</td>
+        <td class='text-center'>{{ anidex_torrents|sum(attribute='download_count') }}</td>
+        <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='download_count'), anidex_torrents|length) }}</td>
+      </tr>
+      <tr>
+        <td>Seeders</td>
+        <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='seeder_count') }}</td>
+        <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='seeder_count'), nyaa_si_torrents|length) }}</td>
+        <td class='text-center'>{{ anidex_torrents|sum(attribute='seeder_count') }}</td>
+        <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='seeder_count'), anidex_torrents|length) }}</td>
+      </tr>
+      <tr>
+        <td>Leechers</td>
+        <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='leecher_count') }}</td>
+        <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='leecher_count'), nyaa_si_torrents|length) }}</td>
+        <td class='text-center'>{{ anidex_torrents|sum(attribute='leecher_count') }}</td>
+        <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='leecher_count'), anidex_torrents|length) }}</td>
+      </tr>
+      <tr>
+        <td>Comments</td>
+        <td class='text-center'>{{ nyaa_si_torrents|sum(attribute='comment_count') }}</td>
+        <td class='text-center'>{{ percent(nyaa_si_torrents|sum(attribute='comment_count'), nyaa_si_torrents|length) }}</td>
+        <td class='text-center'>{{ anidex_torrents|sum(attribute='comment_count') }}</td>
+        <td class='text-center'>{{ percent(anidex_torrents|sum(attribute='comment_count'), anidex_torrents|length) }}</td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td>Torrents</td>
+        <td class='text-center' colspan='2'>
+          {{- nyaa_si_torrents|length }} (visible: {{ nyaa_si_torrents|selectattr('visible', 'equalto', True)|list|length }}) {#- -#}
+        </td>
+        <td class='text-center' colspan='2'>
+          {{- anidex_torrents|length }} (visible: {{ anidex_torrents|selectattr('visible', 'equalto', True)|list|length }}) {#- -#}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+{% endmacro -%}
+
+{%- macro render_torrent_stats(torrent_stats) %}
+  <table class='table table-sm'>
+    <thead class='thead-light'>
+      <tr>
+        <th>Subject</th>
+        <th class='text-center'>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Uptime</td>
+        <td class='text-center'>
+          {%- if torrent_stats -%}
+            {{ torrent_stats.uptime }}
+          {%- else -%}
+            ?
+          {%- endif -%}
+        </td>
+      </tr>
+      <tr>
+        <td>Uploaded</td>
+        <td class='text-center'>
+          {%- if torrent_stats -%}
+            {{ torrent_stats.uploaded_bytes|filesizeformat }}
+          {%- else -%}
+            ?
+          {%- endif -%}
+        </td>
+      </tr>
+      <tr>
+        <td>Downloaded</td>
+        <td class='text-center'>
+          {%- if torrent_stats -%}
+            {{ torrent_stats.downloaded_bytes|filesizeformat }}
+          {%- else -%}
+            ?
+          {%- endif -%}
+        </td>
+      </tr>
+    </tbody>
+    <tbody>
+      <tr>
+        <td>Torrents</td>
+        <td class='text-center'>
+          {%- if torrent_stats -%}
+            {{ torrent_stats.torrents }} (active: {{ torrent_stats.active_torrents }})
+          {%- else -%}
+            ?
+          {%- endif -%}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+{% endmacro -%}

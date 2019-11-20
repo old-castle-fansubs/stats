@@ -182,7 +182,7 @@ def write_report(output_dir: Path, data: Data) -> None:
 
     index_path = output_dir / "index.html"
     index_path.write_text(
-        env.get_template("report.html").render(
+        env.get_template("report.tpl").render(
             **dataclasses.asdict(build_report_context(data))
         )
     )

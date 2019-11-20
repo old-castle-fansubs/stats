@@ -1,0 +1,37 @@
+{%- macro render_request(request) %}
+  <li>
+    <div class='card'>
+      <div class='card-body bg-light'>
+        <a href='{{ request.link }}'>
+          {% if request.picture -%}
+            <img src='{{ request.picture }}' alt='{{ request.title }}'/>
+          {%- else -%}
+            <img src='img/unknown.jpg' alt='Unknown image'/>
+          {%- endif %}
+        </a>
+        <div>
+          <a href='{{ request.link }}'>{{ request.title }}</a>
+          {%- if request.date -%}
+            {#- #} <small>requested on ({{ request.date.strftime('%Y-%m-%d') }})</small>
+          {%- endif %}
+          <p>{{ request.year }} {{ request.type }}, {{ request.episodes }} episode(s)</p>
+          <p>
+            {{ request.synopsis|indent(12, False) }}
+          </p>
+          {% if request.comment -%}
+            <p><strong>Comment from the requester:</strong></p>
+            {{ request.comment|markdown }}
+          {%- endif %}
+        </div>
+      </div>
+    </div>
+  </li>
+{%- endmacro -%}
+
+{%- macro render_requests(requests) %}
+  <ul class='requests'>
+    {%- for request in requests -%}
+      {{- render_request(request)|indent(2, True) -}}
+    {%- endfor %}
+  </ul>
+{% endmacro -%}

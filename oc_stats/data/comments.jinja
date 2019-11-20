@@ -1,0 +1,41 @@
+{%- macro render_comment(comment) %}
+  <li class='border bg-light'>
+    {% if comment.author_avatar_url -%}
+      <img {#-
+        #} class='avatar border' {#-
+        #} src='{{ comment.author_avatar_url }}' {#-
+        #} alt='{{ comment.author_name }}' {#-
+      -#} />
+    {%- else -%}
+      <img {#-
+        #} class='avatar border' {#-
+        #} src='data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==' {#-
+        #} alt='{{ comment.author_name }}' {#-
+      -#} />
+    {% endif %}
+    <strong class='author'>{{ comment.author_name }}</strong>
+    <div class='text mt-1'>
+      {{ comment.text|markdown|indent(6, False) }}
+    </div>
+    <small class='text-muted'>
+      {{- comment.comment_date.strftime('%Y-%m-%d %H:%M') }} on {{ comment.source }}
+      {%- if comment.website_link -%}
+        {#- #} (<a href='{{ comment.website_link }}'>
+          {%- if comment.website_title -%}
+            {{- comment.website_title -}}
+          {%- else -%}
+            link
+          {%- endif -%}
+        </a>)
+      {%- endif -%}
+    </small>
+  </li>
+{%- endmacro -%}
+
+{%- macro render_comments(comments) %}
+  <ul class='list-unstyled comments'>
+    {%- for comment in comments -%}
+      {{- render_comment(comment)|indent(2, True) -}}
+    {%- endfor %}
+  </ul>
+{%- endmacro -%}
