@@ -109,18 +109,20 @@ h2 {
 
 .requests {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) minmax(0, 2fr);
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   grid-column-gap: 1em;
   grid-row-gap: 1em;
   list-style-type: none;
   margin: 0;
   padding: 0;
 }
+.requests li {
+  overflow: hidden;
+  min-width: 0;
+  word-wrap: break-word;
+}
 .requests .card-body {
   display: flex;
-}
-.requests p {
-  word-wrap: break-word;
 }
 .requests .card-body>a {
   flex: 1;
