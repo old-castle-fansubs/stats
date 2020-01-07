@@ -20,7 +20,7 @@ from oc_stats.common import json_datetime_metadata, json_timedelta_metadata
 
 NGINX_LOG_RE = re.compile(
     r"(?P<ipaddress>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) "
-    r"- (?:-|[0-9]+\.[0-9]+) "
+    r"- (?:[^ ]+) "
     r"\[(?P<time>\d{2}\/[A-Za-z]{3}\/\d{4}:\d{2}:\d{2}:\d{2} (\+|\-)\d{4})\] "
     r'"(?P<request>[^"]*)" '
     r"(?P<status>\d{3}) "
