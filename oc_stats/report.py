@@ -108,7 +108,9 @@ def build_report_context(data: T.Any) -> ReportContext:
     num_days = (max_day - min_day).days + 1
     days = [min_day + datetime.timedelta(days=i) for i in range(num_days)]
 
-    hits = build_trendline([(stat.day, stat.hits) for stat in daily_stats])
+    hits = build_trendline(
+        [(stat.day, stat.hits or 0) for stat in daily_stats]
+    )
     downloads = build_trendline(
         [
             (stat.day, (stat.nyaa_si_dl or 0) + (stat.anidex_dl or 0))
