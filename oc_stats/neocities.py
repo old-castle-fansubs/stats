@@ -67,10 +67,10 @@ def get_traffic_stats() -> T.Iterable[TrafficStat]:
     for row in reader:
         yield TrafficStat(
             day=dateutil.parser.parse(row["day"]).date(),
-            hits=int(row["hits"]),
-            views=int(row["views"]),
-            comments=int(row["comments"]),
-            follows=int(row["follows"]),
-            site_updates=int(row["site_updates"]),
-            bandwidth=int(row["bandwidth"]),
+            hits=int(row.get("hits", 0)),
+            views=int(row.get("views", 0)),
+            comments=int(row.get("comments", 0)),
+            follows=int(row.get("follows", 0)),
+            site_updates=int(row.get("site_updates", 0)),
+            bandwidth=int(row.get("bandwidth", 0)),
         )
