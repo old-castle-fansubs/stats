@@ -1,4 +1,5 @@
 humanfriendly
+numpy
 lxml
 requests
 dataclasses-json
