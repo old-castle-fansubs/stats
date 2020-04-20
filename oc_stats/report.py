@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import dataclasses
 import datetime
+import itertools
 import json
+import logging
 import sys
 import typing as T
 from pathlib import Path
@@ -10,7 +12,8 @@ import jinja2
 import numpy as np
 
 from oc_stats import dedibox
-from oc_stats.common import CACHE_DIR, ROOT_DIR, BaseComment, BaseTorrent
+from oc_stats.cache import CACHE_DIR
+from oc_stats.common import ROOT_DIR, BaseComment, BaseTorrent
 from oc_stats.data import Data
 from oc_stats.markdown import render_markdown
 
@@ -42,8 +45,7 @@ def json_default(obj: T.Any) -> T.Any:
 class SmoothedStat:
     day: datetime.date
     value: T.Union[int, float]
-    diff: T.Union[int, float]
-    diff_avg: float
+    value_avg: float
 
 
 @dataclasses.dataclass
@@ -65,58 +67,65 @@ class ReportContext:
     comments: T.List[BaseComment]
     torrents: T.List[BaseTorrent]
     anime_requests: T.List[AnimeRequest]
-    torrent_stats: dedibox.TorrentStats
+    transmission_stats: dedibox.TransmissionStats
     hits: T.List[SmoothedStat]
     downloads: T.List[SmoothedStat]
+
+
+def convert_to_diffs(
+    items: T.List[T.Tuple[datetime.date, T.Union[int, float]]]
+) -> T.Iterable[float]:
+    prev_value = items[0][1] if len(items) else 0
+    for item in items:
+        day, value = item
+        yield day, value - prev_value
+        prev_value = value
 
 
 def build_trendline(
     items: T.List[T.Tuple[datetime.date, T.Union[int, float]]],
 ) -> T.List[SmoothedStat]:
-    diffs: T.List[float] = []
-    prev_value = items[0][1] if len(items) else 0
-    for item in items:
-        _day, value = item
-        diffs.append(value - prev_value)
-        prev_value = value
-    diffs_avg = smooth(diffs)
+    values = [item[1] for item in items]
+    values_avg = smooth(values)
     return [
-        SmoothedStat(day=day, value=value, diff=diff, diff_avg=diff_avg)
-        for (day, value), diff, diff_avg in zip(items, diffs, diffs_avg)
+        SmoothedStat(day=day, value=value, value_avg=value_avg)
+        for (day, value), value_avg in zip(items, values_avg)
     ]
 
 
 def build_report_context(data: T.Any) -> ReportContext:
-    comments = list(data.guestbook_comments)
+    comments = list(data.guestbook_comments) + list(data.nyaa_si_comments)
     torrents = {
         (torrent.source, torrent.torrent_id): torrent
         for torrent in data.anidex_torrents + data.nyaa_si_torrents
     }
 
-    for torrent_id, nyaa_si_comments in data.nyaa_si_comments.items():
-        for nyaa_si_comment in nyaa_si_comments:
-            torrent = torrents.get(("nyaa.si", torrent_id))
-            comments.append(nyaa_si_comment)
-
-    daily_stats = list(sorted(data.daily_stats, key=lambda stat: stat.day))
-    min_day = (
-        min(stat.day for stat in daily_stats)
-        if daily_stats
-        else datetime.datetime.today().date()
+    min_day = min(
+        itertools.chain(
+            [datetime.datetime.today().date()], data.daily_stats.keys(),
+        )
     )
     max_day = datetime.datetime.today().date()
     num_days = (max_day - min_day).days + 1
     days = [min_day + datetime.timedelta(days=i) for i in range(num_days)]
 
     hits = build_trendline(
-        [(stat.day, stat.hits or 0) for stat in daily_stats]
+        [
+            (day, stat.traffic_stat.page_views if stat.traffic_stat else 0)
+            for day, stat in data.daily_stats.items()
+        ]
     )
     downloads = build_trendline(
-        [
-            (stat.day, (stat.nyaa_si_dl or 0) + (stat.anidex_dl or 0))
-            for stat in daily_stats
-            if stat.nyaa_si_dl is not None or stat.anidex_dl is not None
-        ]
+        list(
+            convert_to_diffs(
+                [
+                    (day, (stat.nyaa_si_dl or 0) + (stat.anidex_dl or 0))
+                    for day, stat in data.daily_stats.items()
+                    if stat.nyaa_si_dl is not None
+                    or stat.anidex_dl is not None
+                ]
+            )
+        )
     )
 
     anime_requests: T.List[AnimeRequest] = []
@@ -157,7 +166,7 @@ def build_report_context(data: T.Any) -> ReportContext:
         ),
         torrents=list(torrents.values()),
         anime_requests=anime_requests,
-        torrent_stats=daily_stats[-1].torrent_stats if daily_stats else None,
+        transmission_stats=data.transmission_stats,
         hits=hits,
         downloads=downloads,
     )
@@ -172,7 +181,7 @@ def percent(
 
 
 def write_report(output_dir: Path, data: Data) -> None:
-    print(f"Writing output to {output_dir}…", file=sys.stderr)
+    logging.info(f"Writing output to {output_dir}…")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     env = jinja2.Environment(
@@ -185,7 +194,7 @@ def write_report(output_dir: Path, data: Data) -> None:
     index_path = output_dir / "index.html"
     index_path.write_text(
         env.get_template("report.tpl").render(
-            **dataclasses.asdict(build_report_context(data))
+            **build_report_context(data).__dict__
         )
     )
 

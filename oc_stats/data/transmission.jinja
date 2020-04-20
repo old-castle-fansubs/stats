@@ -60,7 +60,7 @@
   </table>
 {% endmacro -%}
 
-{%- macro render_torrent_stats(torrent_stats) %}
+{%- macro render_transmission_stats(transmission_stats) %}
   <table class='table table-sm'>
     <thead class='thead-light'>
       <tr>
@@ -72,8 +72,8 @@
       <tr>
         <td>Uptime</td>
         <td class='text-center'>
-          {%- if torrent_stats -%}
-            {{ torrent_stats.uptime }}
+          {%- if transmission_stats -%}
+            {{ transmission_stats.uptime }}
           {%- else -%}
             ?
           {%- endif -%}
@@ -82,8 +82,8 @@
       <tr>
         <td>Uploaded</td>
         <td class='text-center'>
-          {%- if torrent_stats -%}
-            {{ torrent_stats.uploaded_bytes|filesizeformat }}
+          {%- if transmission_stats -%}
+            {{ transmission_stats.uploaded_bytes|filesizeformat }}
           {%- else -%}
             ?
           {%- endif -%}
@@ -92,8 +92,8 @@
       <tr>
         <td>Downloaded</td>
         <td class='text-center'>
-          {%- if torrent_stats -%}
-            {{ torrent_stats.downloaded_bytes|filesizeformat }}
+          {%- if transmission_stats -%}
+            {{ transmission_stats.downloaded_bytes|filesizeformat }}
           {%- else -%}
             ?
           {%- endif -%}
@@ -104,8 +104,8 @@
       <tr>
         <td>Torrents</td>
         <td class='text-center'>
-          {%- if torrent_stats -%}
-            {{ torrent_stats.torrents }} (active: {{ torrent_stats.active_torrents }})
+          {%- if transmission_stats -%}
+            {{ transmission_stats.torrent_count }} (active: {{ transmission_stats.active_torrent_count }})
           {%- else -%}
             ?
           {%- endif -%}

@@ -3,8 +3,9 @@ import argparse
 import logging
 from pathlib import Path
 
-from oc_stats.data import DATA_PATH, Data, refresh_data
+from oc_stats.data import Data
 from oc_stats.report import write_report
+from oc_stats.cache import set_global_cache_enabled
 
 
 def parse_args() -> argparse.Namespace:
@@ -24,23 +25,8 @@ def main() -> None:
     logging.basicConfig(level=logging.DEBUG)
     args = parse_args()
 
-    if DATA_PATH.exists():
-        data = Data.from_json(DATA_PATH.read_text())
-    else:
-        data = Data(
-            guestbook_comments=[],
-            anime_requests=[],
-            nyaa_si_torrents=[],
-            nyaa_si_comments={},
-            anidex_torrents=[],
-            daily_stats=[],
-            anidb_titles={},
-        )
-
-    DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
-    for _ in refresh_data(data, args.dev):
-        DATA_PATH.write_text(data.to_json(indent=4))
-
+    set_global_cache_enabled(args.dev)
+    data = Data()
     write_report(args.output_dir, data)
 
 

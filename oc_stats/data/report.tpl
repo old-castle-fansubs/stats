@@ -43,11 +43,14 @@
               <div class='col-xl-8 col-12'>
                 <div class='daily-stats'>
                   <p class='float-right small mt-3 mb-0'>
-                    {% if hits and downloads -%}
-                      Total hits: {{ hits[-1].value }} {# -#}
-                      Total downloads: {{ downloads[-1].value }}
+                    {% if hits -%}
+                      Total hits: {{ hits|sum(attribute='value') }} {# -#}
                     {%- else -%}
                       Total hits: ? {# -#}
+                    {%- endif %}
+                    {% if downloads -%}
+                      Total downloads: {{ downloads[-1].value }}
+                    {%- else -%}
                       Total downloads: ?
                     {%- endif %}
                   </p>
@@ -66,7 +69,7 @@
                 {{- transmission_macros.render_torrents(torrents)|indent(14, True) }}
 
                 <h2>Transmission</h2>
-                {{- transmission_macros.render_torrent_stats(torrent_stats)|indent(14, True) }}
+                {{- transmission_macros.render_transmission_stats(transmission_stats)|indent(14, True) }}
 
                 <h2>Recent requests</h2>
                 <p><small>Showing {{ anime_requests[:max_requests]|length }} out of {{ anime_requests|length }}</small></p>

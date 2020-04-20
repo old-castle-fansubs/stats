@@ -1,9 +1,8 @@
-import collections
 import dataclasses
 import datetime
 import hashlib
-import io
 import json
+import logging
 import os
 import re
 import shlex
@@ -11,11 +10,9 @@ import subprocess
 import typing as T
 
 import dateutil.parser
-from dataclasses_json import dataclass_json
 
-from oc_stats.common import AuthError, BaseComment
-from oc_stats.common import BaseTrafficStat as TrafficStat
-from oc_stats.common import json_datetime_metadata, json_timedelta_metadata
+from oc_stats.cache import CACHE_DIR, is_global_cache_enabled
+from oc_stats.common import BaseComment
 
 NGINX_LOG_RE = re.compile(
     r"(?P<ipaddress>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) "
@@ -27,36 +24,47 @@ NGINX_LOG_RE = re.compile(
     r'("(?P<referer>(\-)|(.+))") '
     r'("(?P<user_agent>.+)")'
 )
-DEDIBOX_HOST = "oldcastle.moe"
+DEDIBOX_HOST = "oc"
 DEDIBOX_PORT = 22
 DEDIBOX_USER = os.environ["DEDIBOX_USER"]
 DEDIBOX_PASS = os.environ["DEDIBOX_PASS"]
 
 
-@dataclass_json
 @dataclasses.dataclass
 class Comment(BaseComment):
     like_count: int = 0
 
 
-@dataclass_json
 @dataclasses.dataclass
-class TorrentStats:
-    torrents: int
-    active_torrents: int
-    downloaded_bytes: int
-    uploaded_bytes: int
-    uptime: datetime.timedelta = dataclasses.field(
-        metadata=json_timedelta_metadata
-    )
+class TransmissionStats:
+    raw_data: T.Dict[str, T.Any]
+
+    @property
+    def torrent_count(self) -> int:
+        return self.raw_data["torrentCount"]
+
+    @property
+    def active_torrent_count(self) -> int:
+        return self.raw_data["activeTorrentCount"]
+
+    @property
+    def downloaded_bytes(self) -> int:
+        return self.raw_data["cumulative-stats"]["downloadedBytes"]
+
+    @property
+    def uploaded_bytes(self) -> int:
+        return self.raw_data["cumulative-stats"]["uploadedBytes"]
+
+    @property
+    def uptime(self) -> datetime.timedelta:
+        return datetime.timedelta(
+            seconds=self.raw_data["cumulative-stats"]["secondsActive"]
+        )
 
 
-@dataclass_json
 @dataclasses.dataclass
 class AnimeRequest:
-    date: T.Optional[datetime.datetime] = dataclasses.field(
-        metadata=json_datetime_metadata
-    )
+    date: T.Optional[datetime.datetime]
     title: str
     link: str
     comment: T.Optional[str]
@@ -69,7 +77,9 @@ class AnimeRequest:
         return int(match.group(1))
 
 
-def get_torrent_stats() -> TorrentStats:
+def get_transmission_stats() -> TransmissionStats:
+    logging.info("dedibox: fetching transmission stats")
+
     content = subprocess.run(
         [
             "ssh",
@@ -100,28 +110,28 @@ def get_torrent_stats() -> TorrentStats:
     )
 
     content = subprocess.run(
-        ["ssh", DEDIBOX_HOST, command,], check=True, stdout=subprocess.PIPE,
+        ["ssh", DEDIBOX_HOST, command], check=True, stdout=subprocess.PIPE,
     ).stdout.decode()
 
     stats = json.loads(content)["arguments"]
-
-    return TorrentStats(
-        torrents=stats["torrentCount"],
-        active_torrents=stats["activeTorrentCount"],
-        downloaded_bytes=stats["cumulative-stats"]["downloadedBytes"],
-        uploaded_bytes=stats["cumulative-stats"]["uploadedBytes"],
-        uptime=datetime.timedelta(
-            seconds=stats["cumulative-stats"]["secondsActive"]
-        ),
-    )
+    return TransmissionStats(raw_data=stats)
 
 
 def list_guestbook_comments() -> T.Iterable[Comment]:
-    content = subprocess.run(
-        ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/comments.json"],
-        check=True,
-        stdout=subprocess.PIPE,
-    ).stdout.decode()
+    cache_path = CACHE_DIR / "dedibox" / "comments.json"
+
+    if cache_path.exists() and is_global_cache_enabled():
+        logging.info("dedibox: using cached guestbook comments")
+        content = cache_path.read_text()
+    else:
+        logging.info("dedibox: fetching guestbook comments")
+        content = subprocess.run(
+            ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/comments.json"],
+            check=True,
+            stdout=subprocess.PIPE,
+        ).stdout.decode()
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(content)
 
     items = json.loads(content)
     for item in items:
@@ -143,11 +153,20 @@ def list_guestbook_comments() -> T.Iterable[Comment]:
 
 
 def list_anime_requests() -> T.Iterable[AnimeRequest]:
-    content = subprocess.run(
-        ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/requests.json"],
-        check=True,
-        stdout=subprocess.PIPE,
-    ).stdout.decode()
+    cache_path = CACHE_DIR / "dedibox" / "requests.json"
+
+    if cache_path.exists() and is_global_cache_enabled():
+        logging.info("dedibox: using cached anime requests")
+        content = cache_path.read_text()
+    else:
+        logging.info("dedibox: fetching anime requests")
+        content = subprocess.run(
+            ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/requests.json"],
+            check=True,
+            stdout=subprocess.PIPE,
+        ).stdout.decode()
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(content)
 
     items = json.loads(content)
     for item in items:
@@ -157,51 +176,3 @@ def list_anime_requests() -> T.Iterable[AnimeRequest]:
             link=item["anidb_link"],
             comment=item["comment"],
         )
-
-
-def get_traffic_stats() -> T.Iterable[TrafficStat]:
-    process = subprocess.Popen(
-        [
-            "ssh",
-            DEDIBOX_HOST,
-            "sudo",
-            "gzip",
-            "--stdout",
-            "--decompress",
-            "--force",
-            "/var/log/nginx/*_oldcastle.moe.log*",
-        ],
-        stdout=subprocess.PIPE,
-    )
-
-    visits: T.Dict[datetime.date, int] = collections.defaultdict(int)
-
-    handle = io.TextIOWrapper(process.stdout, encoding="utf-8")
-    while True:
-        line = handle.readline()
-        line = line.rstrip()
-        if not line:
-            break
-
-        match = NGINX_LOG_RE.search(line)
-        if not match:
-            raise ValueError("Malformed line:", line)
-
-        request = match.group("request")
-        status = int(match.group("status"))
-
-        if "/stats" in request:
-            continue
-
-        if status in {400, 404}:
-            continue
-
-        if status in {200, 304}:
-            day = dateutil.parser.parse(
-                match.group("time").replace(":", " ", 1)
-            ).date()
-            visits[day] += 1
-
-    yield from (
-        TrafficStat(day=day, hits=hits) for day, hits in visits.items()
-    )

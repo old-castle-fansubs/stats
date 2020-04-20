@@ -17,7 +17,7 @@ window.addEventListener('DOMContentLoaded', () => {
         .range([innerHeight, 0])
         .domain([
             0,
-            d3.max([...hits, ...downloads], d => Math.min(2000, d.diff))
+            d3.max([...hits, ...downloads], d => d.value)
         ])
         .nice();
 
@@ -60,7 +60,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 d3.area()
                 .x(d => x(d.day))
                 .y0(innerHeight)
-                .y1(d => y(d.diff))
+                .y1(d => y(d.value))
             );
 
         // lines
@@ -71,7 +71,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 'd',
                 d3.line()
                 .x(d => x(d.day))
-                .y(d => y(d.diff))
+                .y(d => y(d.value))
             );
 
         // average lines
@@ -82,7 +82,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 'd',
                 d3.line()
                 .x(d => x(d.day))
-                .y(d => y(d.diff_avg))
+                .y(d => y(d.value_avg))
             );
     }
 

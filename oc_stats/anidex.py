@@ -1,13 +1,15 @@
 import datetime
+import logging
 import os
+import pickle
 import typing as T
 from dataclasses import dataclass
 
 import humanfriendly
 import lxml.html
 import requests
-from dataclasses_json import dataclass_json
 
+from oc_stats.cache import CACHE_DIR, is_global_cache_enabled
 from oc_stats.common import BaseTorrent
 
 ANIDEX_USER = os.environ["ANIDEX_USER"]
@@ -15,7 +17,6 @@ ANIDEX_PASS = os.environ["ANIDEX_PASS"]
 ANIDEX_GROUP_ID = os.environ["ANIDEX_GROUP_ID"]
 
 
-@dataclass_json
 @dataclass
 class Torrent(BaseTorrent):
     like_count: int = 0
@@ -29,9 +30,14 @@ def bypass_ddos_guard(session: requests.Session) -> None:
         session.cookies.set_cookie(requests.cookies.create_cookie(key, value))
 
 
-def list_group_torrents(
-    page_callback: T.Optional[T.Callable[[int], None]],
-) -> T.Iterable[Torrent]:
+def list_group_torrents() -> T.Iterable[Torrent]:
+    cache_path = CACHE_DIR / "anidex" / "torrents.dat"
+
+    if cache_path.exists() and is_global_cache_enabled():
+        logging.info("anidex: using cached torrent list")
+        return pickle.loads(cache_path.read_bytes())
+
+    logging.info("anidex: fetching torrent list")
     session = requests.Session()
     bypass_ddos_guard(session)
 
@@ -42,11 +48,9 @@ def list_group_torrents(
     )
     response.raise_for_status()
 
+    ret: T.List[Torrent] = []
     offset = 0
     while True:
-        if page_callback:
-            page_callback(offset)
-
         response = session.get(
             f"https://anidex.info/?page=group&id={ANIDEX_GROUP_ID}&offset={offset}"
         )
@@ -55,12 +59,16 @@ def list_group_torrents(
         tree = lxml.html.fromstring(response.content)
         done = 0
         for row in tree.xpath("//table/tbody/tr"):
-            yield _make_torrent(row)
+            ret.append(_make_torrent(row))
             done += 1
 
         if not done:
             break
         offset += done
+
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_bytes(pickle.dumps(ret))
+    return ret
 
 
 def _make_torrent(row: lxml.html.HtmlElement) -> Torrent:

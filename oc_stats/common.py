@@ -1,46 +1,12 @@
-import dataclasses
 import datetime
 import typing as T
+from dataclasses import dataclass
 from pathlib import Path
 
-import dateutil.parser
-
 ROOT_DIR = Path(__file__).parent
-CACHE_DIR = ROOT_DIR.parent / "cache"
-
-json_date_metadata = {
-    "dataclasses_json": {
-        "encoder": (
-            lambda t: datetime.date.isoformat(t) if t is not None else None
-        ),
-        "decoder": (
-            lambda t: dateutil.parser.parse(t).date()
-            if t is not None
-            else None
-        ),
-    }
-}
-
-json_datetime_metadata = {
-    "dataclasses_json": {
-        "encoder": (
-            lambda t: datetime.datetime.isoformat(t) if t is not None else None
-        ),
-        "decoder": (
-            lambda t: dateutil.parser.parse(t) if t is not None else None
-        ),
-    }
-}
-
-json_timedelta_metadata = {
-    "dataclasses_json": {
-        "encoder": lambda t: t.total_seconds(),
-        "decoder": lambda t: datetime.timedelta(seconds=t),
-    }
-}
 
 
-@dataclasses.dataclass
+@dataclass
 class BaseTorrent:
     source: str
     torrent_id: int
@@ -57,7 +23,7 @@ class BaseTorrent:
     visible: bool
 
 
-@dataclasses.dataclass
+@dataclass
 class BaseComment:
     source: str
     comment_date: datetime.datetime
@@ -71,9 +37,3 @@ class BaseComment:
 class AuthError(RuntimeError):
     def __init__(self) -> None:
         super().__init__("authentication error")
-
-
-@dataclasses.dataclass
-class BaseTrafficStat:
-    day: datetime.date = dataclasses.field(metadata=json_date_metadata)
-    hits: int

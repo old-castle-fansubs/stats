@@ -2,5 +2,5 @@ humanfriendly
 numpy
 lxml
 requests
-dataclasses-json
 misaka
+python-dateutil

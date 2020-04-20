@@ -1,5 +1,5 @@
-import dataclasses
 import datetime
+import logging
 import os
 import time
 import typing as T
@@ -9,15 +9,13 @@ from xml.etree import ElementTree
 
 import dateutil.parser
 import requests
-from dataclasses_json import dataclass_json
 
-from oc_stats.common import CACHE_DIR, json_date_metadata
+from oc_stats.cache import CACHE_DIR
 
 ANIDB_CLIENT = os.environ["ANIDB_CLIENT"]
 ANIDB_CLIENTVER = os.environ["ANIDB_CLIENTVER"]
 
 
-@dataclass_json
 @dataclass
 class AniDBInfo:
     id: int
@@ -25,12 +23,8 @@ class AniDBInfo:
     type: str
     episodes: int
     synopsis: str
-    start_date: T.Optional[datetime.date] = dataclasses.field(
-        metadata=json_date_metadata
-    )
-    end_date: T.Optional[datetime.date] = dataclasses.field(
-        metadata=json_date_metadata
-    )
+    start_date: T.Optional[datetime.date]
+    end_date: T.Optional[datetime.date]
 
 
 class XmlParser:
@@ -52,8 +46,9 @@ def get_anidb_info(anime_id: int) -> AniDBInfo:
     image_cache_path = CACHE_DIR / "anidb" / f"{anime_id}.jpg"
 
     if entry_cache_path.exists():
-        content = entry_cache_path.read_text()
+        logging.info(f"anidb: using cached info for {anime_id}")
     else:
+        logging.info(f"anidb: fetching info for {anime_id}")
         response = requests.get(
             f"http://api.anidb.net:9001/httpapi?request=anime&aid={anime_id}"
             f"&client={ANIDB_CLIENT}&clientver={ANIDB_CLIENTVER}&protover=1"
@@ -62,14 +57,15 @@ def get_anidb_info(anime_id: int) -> AniDBInfo:
         time.sleep(2)
         entry_cache_path.parent.mkdir(parents=True, exist_ok=True)
         entry_cache_path.write_text(response.text)
-        content = response.text
 
     doc = XmlParser(entry_cache_path)
 
     image_url = "http://cdn.anidb.net/images/main/" + doc.get_text(
         ".//picture"
     )
-    if not image_cache_path.exists():
+    if image_cache_path.exists():
+        logging.info(f"anidb: using cached picture for {anime_id}")
+    else:
         response = requests.get(image_url)
         response.raise_for_status()
         time.sleep(2)
