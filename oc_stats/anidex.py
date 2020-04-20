@@ -21,10 +21,19 @@ class Torrent(BaseTorrent):
     like_count: int = 0
 
 
+def bypass_ddos_guard(session: requests.Session) -> None:
+    response = session.post("https://check.ddos-guard.net/check.js")
+    response.raise_for_status()
+    # make the cookies work across all domains
+    for key, value in session.cookies.items():
+        session.cookies.set_cookie(requests.cookies.create_cookie(key, value))
+
+
 def list_group_torrents(
     page_callback: T.Optional[T.Callable[[int], None]],
 ) -> T.Iterable[Torrent]:
     session = requests.Session()
+    bypass_ddos_guard(session)
 
     response = session.post(
         "https://anidex.info/ajax/actions.ajax.php?function=login",
