@@ -6,12 +6,11 @@ import io
 import json
 import os
 import re
+import shlex
 import subprocess
 import typing as T
 
 import dateutil.parser
-import sshtunnel
-import transmissionrpc
 from dataclasses_json import dataclass_json
 
 from oc_stats.common import AuthError, BaseComment
@@ -71,35 +70,50 @@ class AnimeRequest:
 
 
 def get_torrent_stats() -> TorrentStats:
-    transmission_tunnel = sshtunnel.SSHTunnelForwarder(
-        (DEDIBOX_HOST, DEDIBOX_PORT),
-        ssh_username=DEDIBOX_USER,
-        ssh_password=DEDIBOX_PASS,
-        remote_bind_address=("127.0.0.1", 9091),
+    content = subprocess.run(
+        [
+            "ssh",
+            DEDIBOX_HOST,
+            "curl 'http://127.0.0.1:9091/transmission/rpc' -siI",
+        ],
+        check=True,
+        stdout=subprocess.PIPE,
+    ).stdout.decode()
+
+    transmission_session_id = re.search(
+        "X-Transmission-Session-Id: (\S+)", content
+    ).group(1)
+
+    command = " ".join(
+        shlex.quote(arg)
+        for arg in [
+            "curl",
+            "http://127.0.0.1:9091/transmission/rpc",
+            "-s",
+            "-H",
+            f"X-Transmission-Session-Id: {transmission_session_id}",
+            "-X",
+            "POST",
+            "--data",
+            '{"method":"session-stats"}',
+        ]
     )
-    transmission_tunnel.start()
-    transmission = transmissionrpc.Client(
-        "127.0.0.1", port=transmission_tunnel.local_bind_port
-    )
 
-    if transmission is None:
-        raise AuthError
+    content = subprocess.run(
+        ["ssh", DEDIBOX_HOST, command,], check=True, stdout=subprocess.PIPE,
+    ).stdout.decode()
 
-    stats = transmission.session_stats()
+    stats = json.loads(content)["arguments"]
 
-    ret = TorrentStats(
-        torrents=stats.torrentCount,
-        active_torrents=stats.activeTorrentCount,
-        downloaded_bytes=stats.cumulative_stats["downloadedBytes"],
-        uploaded_bytes=stats.cumulative_stats["uploadedBytes"],
+    return TorrentStats(
+        torrents=stats["torrentCount"],
+        active_torrents=stats["activeTorrentCount"],
+        downloaded_bytes=stats["cumulative-stats"]["downloadedBytes"],
+        uploaded_bytes=stats["cumulative-stats"]["uploadedBytes"],
         uptime=datetime.timedelta(
-            seconds=stats.cumulative_stats["secondsActive"]
+            seconds=stats["cumulative-stats"]["secondsActive"]
         ),
     )
-
-    transmission_tunnel.close()
-
-    return ret
 
 
 def list_guestbook_comments() -> T.Iterable[Comment]:
