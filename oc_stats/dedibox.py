@@ -3,7 +3,6 @@ import datetime
 import hashlib
 import json
 import logging
-import os
 import re
 import shlex
 import subprocess
@@ -14,20 +13,7 @@ import dateutil.parser
 from oc_stats.cache import CACHE_DIR, is_global_cache_enabled
 from oc_stats.common import BaseComment
 
-NGINX_LOG_RE = re.compile(
-    r"(?P<ipaddress>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) "
-    r"- (?:[^ ]+) "
-    r"\[(?P<time>\d{2}\/[A-Za-z]{3}\/\d{4}:\d{2}:\d{2}:\d{2} (\+|\-)\d{4})\] "
-    r'"(?P<request>[^"]*)" '
-    r"(?P<status>\d{3}) "
-    r"(?P<bytes_sent>\d+) "
-    r'("(?P<referer>(\-)|(.+))") '
-    r'("(?P<user_agent>.+)")'
-)
 DEDIBOX_HOST = "oc"
-DEDIBOX_PORT = 22
-DEDIBOX_USER = os.environ["DEDIBOX_USER"]
-DEDIBOX_PASS = os.environ["DEDIBOX_PASS"]
 
 
 @dataclasses.dataclass
@@ -90,9 +76,9 @@ def get_transmission_stats() -> TransmissionStats:
         stdout=subprocess.PIPE,
     ).stdout.decode()
 
-    transmission_session_id = re.search(
-        "X-Transmission-Session-Id: (\S+)", content
-    ).group(1)
+    match = re.search(r"X-Transmission-Session-Id: (\S+)", content)
+    assert match
+    transmission_session_id = match.group(1)
 
     command = " ".join(
         shlex.quote(arg)

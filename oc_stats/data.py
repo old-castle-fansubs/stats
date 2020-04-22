@@ -100,8 +100,10 @@ class Data:
         self.update_daily_stats()
 
     @property
-    def transmission_stats(self) -> dedibox.TransmissionStats:
+    def transmission_stats(self) -> T.Optional[dedibox.TransmissionStats]:
         today = datetime.datetime.today().date()
+        if today not in self.daily_stats:
+            return None
         return self.daily_stats[today].transmission_stats
 
     def update_daily_stats(self) -> None:

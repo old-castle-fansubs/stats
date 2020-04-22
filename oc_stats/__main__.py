@@ -3,9 +3,9 @@ import argparse
 import logging
 from pathlib import Path
 
+from oc_stats.cache import set_global_cache_enabled
 from oc_stats.data import Data
 from oc_stats.report import write_report
-from oc_stats.cache import set_global_cache_enabled
 
 
 def parse_args() -> argparse.Namespace:

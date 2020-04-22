@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 import dataclasses
 import datetime
-import itertools
 import json
 import logging
-import sys
 import typing as T
 from pathlib import Path
 
@@ -16,6 +14,8 @@ from oc_stats.cache import CACHE_DIR
 from oc_stats.common import ROOT_DIR, BaseComment, BaseTorrent
 from oc_stats.data import Data
 from oc_stats.markdown import render_markdown
+from oc_stats.anidb import AniDBInfo
+from oc_stats.dedibox import AnimeRequest
 
 
 def smooth(source: np.array) -> np.array:
@@ -49,16 +49,49 @@ class SmoothedStat:
 
 
 @dataclasses.dataclass
-class AnimeRequest:
-    date: T.Optional[datetime.datetime]
-    title: str
-    link: str
-    comment: str
-    picture: T.Optional[str]
-    synopsis: T.Optional[str]
-    type: T.Optional[str]
-    episodes: T.Optional[int]
-    year: T.Optional[int]
+class ExtendedAnimeRequest:
+    anidb_info: AniDBInfo
+    request: AnimeRequest
+
+    @property
+    def date(self) -> T.Optional[datetime.datetime]:
+        return self.request.date
+
+    @property
+    def title(self) -> str:
+        return self.anidb_info.title if self.anidb_info else self.request.title
+
+    @property
+    def link(self) -> str:
+        return self.request.link
+
+    @property
+    def comment(self) -> T.Optional[str]:
+        return self.request.comment
+
+    @property
+    def picture(self) -> T.Optional[str]:
+        return f"anidb/{self.anidb_info.id}.jpg" if self.anidb_info else None
+
+    @property
+    def synopsis(self) -> T.Optional[str]:
+        return self.anidb_info.synopsis if self.anidb_info else None
+
+    @property
+    def type(self) -> T.Optional[str]:
+        return self.anidb_info.type if self.anidb_info else None
+
+    @property
+    def episodes(self) -> T.Optional[int]:
+        return self.anidb_info.episodes if self.anidb_info else None
+
+    @property
+    def year(self) -> T.Optional[int]:
+        return (
+            self.anidb_info.start_date.year
+            if self.anidb_info and self.anidb_info.start_date
+            else None
+        )
 
 
 @dataclasses.dataclass
@@ -66,7 +99,7 @@ class ReportContext:
     date: datetime.datetime
     comments: T.List[BaseComment]
     torrents: T.List[BaseTorrent]
-    anime_requests: T.List[AnimeRequest]
+    anime_requests: T.List[ExtendedAnimeRequest]
     transmission_stats: dedibox.TransmissionStats
     hits: T.List[SmoothedStat]
     downloads: T.List[SmoothedStat]
@@ -74,7 +107,7 @@ class ReportContext:
 
 def convert_to_diffs(
     items: T.List[T.Tuple[datetime.date, T.Union[int, float]]]
-) -> T.Iterable[float]:
+) -> T.Iterable[T.Tuple[datetime.date, T.Union[int, float]]]:
     prev_value = items[0][1] if len(items) else 0
     for item in items:
         day, value = item
@@ -100,15 +133,6 @@ def build_report_context(data: T.Any) -> ReportContext:
         for torrent in data.anidex_torrents + data.nyaa_si_torrents
     }
 
-    min_day = min(
-        itertools.chain(
-            [datetime.datetime.today().date()], data.daily_stats.keys(),
-        )
-    )
-    max_day = datetime.datetime.today().date()
-    num_days = (max_day - min_day).days + 1
-    days = [min_day + datetime.timedelta(days=i) for i in range(num_days)]
-
     hits = build_trendline(
         [
             (day, stat.traffic_stat.page_views if stat.traffic_stat else 0)
@@ -128,25 +152,13 @@ def build_report_context(data: T.Any) -> ReportContext:
         )
     )
 
-    anime_requests: T.List[AnimeRequest] = []
+    anime_requests: T.List[ExtendedAnimeRequest] = []
     for request in data.anime_requests:
         anidb_info = (
             data.anidb_titles[request.anidb_id] if request.anidb_id else None
         )
         anime_requests.append(
-            AnimeRequest(
-                date=request.date,
-                title=anidb_info.title if anidb_info else request.title,
-                link=request.link,
-                comment=request.comment,
-                synopsis=anidb_info.synopsis if anidb_info else None,
-                type=anidb_info.type if anidb_info else None,
-                picture=f"anidb/{anidb_info.id}.jpg" if anidb_info else None,
-                episodes=anidb_info.episodes if anidb_info else None,
-                year=anidb_info.start_date.year
-                if anidb_info and anidb_info.start_date
-                else None,
-            )
+            ExtendedAnimeRequest(request=request, anidb_info=anidb_info)
         )
     anime_requests.sort(
         key=lambda request: request.date.replace(tzinfo=None)
