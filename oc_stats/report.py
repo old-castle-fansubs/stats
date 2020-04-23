@@ -101,7 +101,7 @@ class ReportContext:
     torrents: T.List[BaseTorrent]
     anime_requests: T.List[ExtendedAnimeRequest]
     transmission_stats: dedibox.TransmissionStats
-    hits: T.List[SmoothedStat]
+    page_views: T.List[SmoothedStat]
     downloads: T.List[SmoothedStat]
 
 
@@ -133,7 +133,7 @@ def build_report_context(data: T.Any) -> ReportContext:
         for torrent in data.anidex_torrents + data.nyaa_si_torrents
     }
 
-    hits = build_trendline(
+    page_views = build_trendline(
         [
             (day, stat.traffic_stat.page_views if stat.traffic_stat else 0)
             for day, stat in data.daily_stats.items()
@@ -179,7 +179,7 @@ def build_report_context(data: T.Any) -> ReportContext:
         torrents=list(torrents.values()),
         anime_requests=anime_requests,
         transmission_stats=data.transmission_stats,
-        hits=hits,
+        page_views=page_views,
         downloads=downloads,
     )
 

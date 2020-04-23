@@ -1,5 +1,5 @@
 const parseTime = d3.timeParse('%Y-%m-%d');
-hits.forEach(d => d.day = parseTime(d.day));
+pageViews.forEach(d => d.day = parseTime(d.day));
 downloads.forEach(d => d.day = parseTime(d.day));
 
 
@@ -12,12 +12,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const x = d3.scaleTime()
         .range([0, innerWidth])
-        .domain(d3.extent(hits.concat(downloads), d => d.day));
+        .domain(d3.extent(pageViews.concat(downloads), d => d.day));
     const y = d3.scaleLinear()
         .range([innerHeight, 0])
         .domain([
             0,
-            d3.max([...hits, ...downloads], d => d.value)
+            d3.max([...pageViews, ...downloads], d => d.value)
         ])
         .nice();
 
@@ -46,7 +46,7 @@ window.addEventListener('DOMContentLoaded', () => {
         );
 
     const series = [
-        {data: hits, title: 'Website hits', className: 'hits'},
+        {data: pageViews, title: 'Website views', className: 'page-views'},
         {data: downloads, title: 'Downloads', className: 'downloads'},
     ];
 

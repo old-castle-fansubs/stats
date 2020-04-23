@@ -24,11 +24,11 @@ h2 {
   vector-effect: non-scaling-stroke;
 }
 
-.daily-stats .hits {
+.daily-stats .page-views {
   stroke: hsla(200, 80%, 60%, 0.8);
   fill: hsla(200, 100%, 70%, 0.3);
 }
-.daily-stats text.hits {
+.daily-stats text.page-views {
   stroke: none;
   fill: hsla(200, 80%, 60%, 0.8);
 }
@@ -69,7 +69,7 @@ h2 {
   stroke: none;
 }
 
-.daily-stats .line.hits-avg {
+.daily-stats .line.page-views-avg {
   fill: none;
   stroke: hsla(200, 80%, 40%, 1);
   stroke-width: 1px;
