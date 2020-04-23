@@ -48,11 +48,7 @@
                     {%- else -%}
                       Total hits: ? {# -#}
                     {%- endif %}
-                    {% if downloads -%}
-                      Total downloads: {{ downloads[-1].value }}
-                    {%- else -%}
-                      Total downloads: ?
-                    {%- endif %}
+                    Total downloads: {{ torrents|sum(attribute='download_count') }}
                   </p>
 
                   <h2>Daily stats</h2>
