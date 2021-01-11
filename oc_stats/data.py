@@ -84,7 +84,10 @@ class Data:
             for request in self.anime_requests
             if request.anidb_id
         }
-        self.anidex_torrents = list(anidex.list_group_torrents())
+        try:
+            self.anidex_torrents = list(anidex.list_group_torrents())
+        except Exception as ex:
+            self.anidex_torrents = []
         self.nyaa_si_torrents = list(nyaa_si.list_user_torrents())
         self.nyaa_si_comments = list(
             sum(
