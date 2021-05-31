@@ -1,5 +1,3 @@
-import dataclasses
-import datetime
 import hashlib
 import json
 import logging
@@ -7,21 +5,24 @@ import re
 import shlex
 import subprocess
 import typing as T
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
 import dateutil.parser
-
-from oc_stats.cache import CACHE_DIR, is_global_cache_enabled
-from oc_stats.common import BaseComment
 
 DEDIBOX_HOST = "oc"
 
 
-@dataclasses.dataclass
-class Comment(BaseComment):
-    like_count: int = 0
+@dataclass
+class Comment:
+    website_link: T.Optional[str]
+    comment_date: datetime
+    author_name: str
+    author_avatar_url: T.Optional[str]
+    text: str
 
 
-@dataclasses.dataclass
+@dataclass
 class TransmissionStats:
     raw_data: T.Dict[str, T.Any]
 
@@ -42,15 +43,15 @@ class TransmissionStats:
         return self.raw_data["cumulative-stats"]["uploadedBytes"]
 
     @property
-    def uptime(self) -> datetime.timedelta:
-        return datetime.timedelta(
+    def uptime(self) -> timedelta:
+        return timedelta(
             seconds=self.raw_data["cumulative-stats"]["secondsActive"]
         )
 
 
-@dataclasses.dataclass
+@dataclass
 class AnimeRequest:
-    date: T.Optional[datetime.datetime]
+    date: T.Optional[datetime]
     title: str
     link: str
     comment: T.Optional[str]
@@ -96,28 +97,22 @@ def get_transmission_stats() -> TransmissionStats:
     )
 
     content = subprocess.run(
-        ["ssh", DEDIBOX_HOST, command], check=True, stdout=subprocess.PIPE,
+        ["ssh", DEDIBOX_HOST, command],
+        check=True,
+        stdout=subprocess.PIPE,
     ).stdout.decode()
 
     stats = json.loads(content)["arguments"]
     return TransmissionStats(raw_data=stats)
 
 
-def list_guestbook_comments() -> T.Iterable[Comment]:
-    cache_path = CACHE_DIR / "dedibox" / "comments.json"
-
-    if cache_path.exists() and is_global_cache_enabled():
-        logging.info("dedibox: using cached guestbook comments")
-        content = cache_path.read_text()
-    else:
-        logging.info("dedibox: fetching guestbook comments")
-        content = subprocess.run(
-            ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/comments.json"],
-            check=True,
-            stdout=subprocess.PIPE,
-        ).stdout.decode()
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(content)
+def get_guestbook_comments() -> T.Iterable[Comment]:
+    logging.info("dedibox: fetching guestbook comments")
+    content = subprocess.run(
+        ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/comments.json"],
+        check=True,
+        stdout=subprocess.PIPE,
+    ).stdout.decode()
 
     items = json.loads(content)
     for item in items:
@@ -126,33 +121,23 @@ def list_guestbook_comments() -> T.Iterable[Comment]:
         ).hexdigest()
         avatar_url = f"https://www.gravatar.com/avatar/{chksum}?d=retro"
         yield Comment(
-            source="guestbook",
             website_link=f"https://oldcastle.moe/guest_book.html#comment-{item['id']}",
             comment_date=dateutil.parser.parse(item["created"]).replace(
-                tzinfo=datetime.timezone.utc
+                tzinfo=timezone.utc
             ),
             author_name=item["author"],
             author_avatar_url=avatar_url,
             text=item["text"],
-            like_count=item["likes"],
         )
 
 
-def list_anime_requests() -> T.Iterable[AnimeRequest]:
-    cache_path = CACHE_DIR / "dedibox" / "requests.json"
-
-    if cache_path.exists() and is_global_cache_enabled():
-        logging.info("dedibox: using cached anime requests")
-        content = cache_path.read_text()
-    else:
-        logging.info("dedibox: fetching anime requests")
-        content = subprocess.run(
-            ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/requests.json"],
-            check=True,
-            stdout=subprocess.PIPE,
-        ).stdout.decode()
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(content)
+def get_anime_requests() -> T.Iterable[AnimeRequest]:
+    logging.info("dedibox: fetching anime requests")
+    content = subprocess.run(
+        ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/requests.json"],
+        check=True,
+        stdout=subprocess.PIPE,
+    ).stdout.decode()
 
     items = json.loads(content)
     for item in items:

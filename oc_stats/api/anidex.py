@@ -1,16 +1,12 @@
-import datetime
 import logging
 import os
-import pickle
 import typing as T
 from dataclasses import dataclass
+from datetime import datetime
 
 import humanfriendly
 import lxml.html
 import requests
-
-from oc_stats.cache import CACHE_DIR, is_global_cache_enabled
-from oc_stats.common import BaseTorrent
 
 ANIDEX_USER = os.environ["ANIDEX_USER"]
 ANIDEX_PASS = os.environ["ANIDEX_PASS"]
@@ -18,8 +14,20 @@ ANIDEX_GROUP_ID = os.environ["ANIDEX_GROUP_ID"]
 
 
 @dataclass
-class Torrent(BaseTorrent):
-    like_count: int = 0
+class Torrent:
+    torrent_id: int
+    website_link: str
+    torrent_link: str
+    magnet_link: T.Optional[str]
+    name: str
+    size: int
+    upload_date: datetime
+    seeder_count: int
+    leecher_count: int
+    download_count: int
+    like_count: int
+    comment_count: int
+    visible: bool
 
 
 def bypass_ddos_guard(session: requests.Session) -> None:
@@ -30,13 +38,7 @@ def bypass_ddos_guard(session: requests.Session) -> None:
         session.cookies.set_cookie(requests.cookies.create_cookie(key, value))
 
 
-def list_group_torrents() -> T.Iterable[Torrent]:
-    cache_path = CACHE_DIR / "anidex" / "torrents.dat"
-
-    if cache_path.exists() and is_global_cache_enabled():
-        logging.info("anidex: using cached torrent list")
-        return pickle.loads(cache_path.read_bytes())
-
+def get_group_torrents() -> T.Iterable[Torrent]:
     logging.info("anidex: fetching torrent list")
     session = requests.Session()
     bypass_ddos_guard(session)
@@ -66,8 +68,6 @@ def list_group_torrents() -> T.Iterable[Torrent]:
             break
         offset += done
 
-    cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_bytes(pickle.dumps(ret))
     return ret
 
 
@@ -75,14 +75,13 @@ def _make_torrent(row: lxml.html.HtmlElement) -> Torrent:
     torrent_id = int(row.xpath(".//td[3]/a/@id")[0])
 
     return Torrent(
-        source="anidex.info",
         torrent_id=torrent_id,
         name=row.xpath(".//td[3]//span/@title")[0],
         website_link=f"https://anidex.info/torrent/{torrent_id}",
         torrent_link=f"https://anidex.info/dl/{torrent_id}",
         magnet_link=row.xpath('.//a[contains(@href, "magnet")]/@href')[0],
         size=humanfriendly.parse_size(row.xpath(".//td[7]/text()")[0]),
-        upload_date=datetime.datetime(
+        upload_date=datetime(
             *humanfriendly.parse_date(row.xpath(".//td[8]/@title")[0])
         ),
         seeder_count=int(row.xpath(".//td[9]/text()")[0]),

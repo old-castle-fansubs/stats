@@ -1,6 +1,7 @@
 humanfriendly
-numpy
 lxml
 requests
-misaka
 python-dateutil
+flask
+markdown
+bleach

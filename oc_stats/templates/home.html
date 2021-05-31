@@ -11,7 +11,7 @@
   <title>Old Castle Fansubs - stats</title>
   <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
   <link rel='stylesheet' type='text/css' href='https://bootswatch.com/4/minty/bootstrap.min.css'/>
-  <style type='text/css'>{% include 'report-style.css' %}</style>
+  <link rel='stylesheet' type='text/css' href='{{ url_for('static', filename='report-style.css') }}?{{ deployment_id }}'>
 </head>
 <body>
   <main class='container-fluid'>
@@ -19,14 +19,13 @@
       <div class='col-lg-9 col-12'>
         <header class='page-header jumbotron pt-2 pb-2 mt-3 mb-3 text-center'>
           <h1>Old Castle Fansubs - statistics</h1>
-          <p class='text-muted small'>Generated at {{ date.strftime('%Y-%m-%d %H:%M') }}</p>
         </header>
       </div>
     </section>
 
     <section class='row justify-content-center'>
       <div class='col-lg-9 col-12'>
-        <ul class='nav nav-tabs' id='myTab' role='tablist'>
+        <ul class='nav nav-tabs' role='tablist'>
           <li class='nav-item'>
             <a class='nav-link active' id='dashboard-tab' data-bs-toggle='tab' href='#dashboard' role='tab' aria-controls='dashboard' aria-selected='true'>Dashboard</a>
           </li>
@@ -37,17 +36,13 @@
             <a class='nav-link' id='requests-tab' data-bs-toggle='tab' href='#requests' role='tab' aria-controls='requests' aria-selected='false'>Requests</a>
           </li>
         </ul>
-        <div class='tab-content' id='myTabContent'>
+        <div class='tab-content'>
           <div class='tab-pane fade show active' id='dashboard' role='tabpanel' aria-labelledby='dashboard-tab'>
             <div class='row justify-content-center'>
               <div class='col-xl-8 col-12'>
                 <div class='daily-stats'>
                   <p class='float-right small mt-3 mb-0'>
-                    {% if page_views -%}
-                      Total page views: {{ page_views|sum(attribute='value') }} {# -#}
-                    {%- else -%}
-                      Total page views: ? {# -#}
-                    {%- endif %}
+                    Total page views: {{ daily_traffic_stats|sum(attribute='requests') }} {# -#}
                     Total downloads: {{ torrents|sum(attribute='download_count') }}
                   </p>
 
@@ -104,8 +99,12 @@
   <script src='https://bootswatch.com/_vendor/jquery/dist/jquery.min.js'></script>
   <script src='https://bootswatch.com/_vendor/bootstrap/dist/js/bootstrap.bundle.min.js'></script>
   <script src='https://d3js.org/d3.v4.min.js'></script>
-  <script>var pageViews = {{ page_views|tojson|safe }};</script>
-  <script>var downloads = {{ downloads|tojson|safe }};</script>
-  <script>{% include 'report-daily-stats.js' %}</script>
+  <script>
+    const rawData = {};
+    rawData.pageViews = {{ daily_traffic_stats|tojson|safe }} || [];
+    rawData.anidexDownloads = {{ daily_anidex_stats|tojson|safe }} || [];
+    rawData.nyaaSiDownloads = {{ daily_nyaa_si_stats|tojson|safe }} || [];
+  </script>
+  <script src='{{ url_for('static', filename='report-daily-stats.js') }}'></script>
 </body>
 </html>

@@ -33,13 +33,22 @@ h2 {
   fill: hsla(200, 80%, 60%, 0.8);
 }
 
-.daily-stats .downloads {
+.daily-stats .nyaa-si-downloads {
   stroke: hsla(100, 80%, 40%, 0.8);
   fill: hsla(100, 100%, 70%, 0.3);
 }
-.daily-stats text.downloads {
+.daily-stats text.nyaa-si-downloads {
   stroke: none;
   fill: hsla(100, 80%, 40%, 0.8);
+}
+
+.daily-stats .anidex-downloads {
+  stroke: hsla(30, 80%, 40%, 0.8);
+  fill: hsla(30, 100%, 70%, 0.3);
+}
+.daily-stats text.anidex-downloads {
+  stroke: none;
+  fill: hsla(30, 80%, 40%, 0.8);
 }
 
 .daily-stats .line {

@@ -10,7 +10,7 @@ from xml.etree import ElementTree
 import dateutil.parser
 import requests
 
-from oc_stats.cache import CACHE_DIR
+from oc_stats.common import CACHE_DIR
 
 ANIDB_CLIENT = os.environ["ANIDB_CLIENT"]
 ANIDB_CLIENTVER = os.environ["ANIDB_CLIENTVER"]
@@ -66,6 +66,10 @@ def get_anidb_info(anime_id: int) -> AniDBInfo:
         entry_cache_path.write_text(response.text)
 
     doc = XmlParser(entry_cache_path)
+
+    # for fuck's sake…
+    if entry_cache_path.read_text().startswith("<error"):
+        return None
 
     image_url = "http://cdn.anidb.net/images/main/" + doc.get_text(
         ".//picture"

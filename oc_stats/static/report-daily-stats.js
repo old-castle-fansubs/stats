@@ -1,7 +1,18 @@
 const parseTime = d3.timeParse('%Y-%m-%d');
-pageViews.forEach(d => d.day = parseTime(d.day));
-downloads.forEach(d => d.day = parseTime(d.day));
+const pageViews = rawData.pageViews.map(stat => ({
+  day: parseTime(stat.day),
+  value: stat.requests,
+}));
+const anidexDownloads = Object.entries(rawData.anidexDownloads).map(([day, value]) => ({
+  day: parseTime(day),
+  value: value,
+}));
+const nyaaSiDownloads = Object.entries(rawData.nyaaSiDownloads).map(([day, value]) => ({
+  day: parseTime(day),
+  value: value,
+}));
 
+const allData = [...pageViews, ...anidexDownloads, ...nyaaSiDownloads];
 
 window.addEventListener('DOMContentLoaded', () => {
     const margin = {top: 10, right: 10, bottom: 20, left: 50};
@@ -12,13 +23,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const x = d3.scaleTime()
         .range([0, innerWidth])
-        .domain(d3.extent(pageViews.concat(downloads), d => d.day));
+        .domain(d3.extent(allData, d => d.day));
     const y = d3.scaleLinear()
         .range([innerHeight, 0])
-        .domain([
-            0,
-            d3.max([...pageViews, ...downloads], d => d.value)
-        ])
+        .domain([0, d3.max(allData, d => d.value)])
         .nice();
 
     const svg = d3
@@ -47,7 +55,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const series = [
         {data: pageViews, title: 'Website views', className: 'page-views'},
-        {data: downloads, title: 'Downloads', className: 'downloads'},
+        {data: anidexDownloads, title: 'Anidex downloads', className: 'anidex-downloads'},
+        {data: nyaaSiDownloads, title: 'Nyaa.si downloads', className: 'nyaa-si-downloads'},
     ];
 
     for (const chart of series) {
