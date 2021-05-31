@@ -1,21 +1,22 @@
 const parseTime = d3.timeParse('%Y-%m-%d');
 const pageViews = rawData.pageViews.map(stat => ({
   day: parseTime(stat.day),
-  value: stat.requests,
+  value: +stat.requests,
 }));
 const anidexDownloads = Object.entries(rawData.anidexDownloads).map(([day, value]) => ({
   day: parseTime(day),
-  value: value,
+  value: +value,
 }));
 const nyaaSiDownloads = Object.entries(rawData.nyaaSiDownloads).map(([day, value]) => ({
   day: parseTime(day),
-  value: value,
+  value: +value,
 }));
 
-const allData = [...pageViews, ...anidexDownloads, ...nyaaSiDownloads];
+const downloadData = [...anidexDownloads, ...nyaaSiDownloads];
+const allData = [...pageViews, ...downloadData];
 
 window.addEventListener('DOMContentLoaded', () => {
-    const margin = {top: 10, right: 10, bottom: 20, left: 50};
+    const margin = {top: 10, right: 50, bottom: 20, left: 50};
     const outerWidth = 800;
     const outerHeight = 300;
     const innerWidth = outerWidth - margin.left - margin.right;
@@ -24,9 +25,13 @@ window.addEventListener('DOMContentLoaded', () => {
     const x = d3.scaleTime()
         .range([0, innerWidth])
         .domain(d3.extent(allData, d => d.day));
-    const y = d3.scaleLinear()
+    const y1 = d3.scaleLinear()
         .range([innerHeight, 0])
         .domain([0, d3.max(allData, d => d.value)])
+        .nice();
+    const y2 = d3.scaleLinear()
+        .range([innerHeight, 0])
+        .domain([0, d3.max(downloadData, d => d.value)])
         .nice();
 
     const svg = d3
@@ -48,15 +53,21 @@ window.addEventListener('DOMContentLoaded', () => {
         );
     svg.append('g')
         .attr('class', 'grid')
-        .call(d3.axisLeft(y)
+        .call(d3.axisLeft(y1)
+            .tickSize(-innerWidth)
+            .tickFormat('')
+        );
+    svg.append('g')
+        .attr('class', 'grid')
+        .call(d3.axisRight(y2)
             .tickSize(-innerWidth)
             .tickFormat('')
         );
 
     const series = [
-        {data: pageViews, title: 'Website views', className: 'page-views'},
-        {data: anidexDownloads, title: 'Anidex downloads', className: 'anidex-downloads'},
-        {data: nyaaSiDownloads, title: 'Nyaa.si downloads', className: 'nyaa-si-downloads'},
+        {data: pageViews, title: 'Website views', className: 'page-views', axis: y1},
+        {data: anidexDownloads, title: 'Anidex downloads', className: 'anidex-downloads', axis: y2},
+        {data: nyaaSiDownloads, title: 'Nyaa.si downloads', className: 'nyaa-si-downloads', axis: y2},
     ];
 
     for (const chart of series) {
@@ -69,7 +80,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 d3.area()
                 .x(d => x(d.day))
                 .y0(innerHeight)
-                .y1(d => y(d.value))
+                .y1(d => chart.axis(d.value))
             );
 
         // lines
@@ -80,7 +91,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 'd',
                 d3.line()
                 .x(d => x(d.day))
-                .y(d => y(d.value))
+                .y(d => chart.axis(d.value))
             );
 
         // average lines
@@ -91,7 +102,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 'd',
                 d3.line()
                 .x(d => x(d.day))
-                .y(d => y(d.value_avg))
+                .y(d => chart.axis(d.value_avg))
             );
     }
 
@@ -106,27 +117,27 @@ window.addEventListener('DOMContentLoaded', () => {
     svg.append('rect')
         .attr('x', legendX)
         .attr('y', legendY)
-        .attr('width', 115)
+        .attr('width', 150)
         .attr('height', 2 * legendPadding + legendSquareSize * series.length + legendSquareSpacing * (series.length - 1))
         .attr('class', 'legend-wrapper');
 
-    svg.selectAll("legendSquares")
+    svg.selectAll('legendSquares')
         .data(series)
         .enter()
-        .append("rect")
-        .attr("x", legendX + legendPadding)
-        .attr("y", (d, i) => legendY + legendPadding + i * (legendSquareSize + legendSquareSpacing))
-        .attr("width", legendSquareSize)
-        .attr("height", legendSquareSize)
-        .attr("class", d => `legend ${d.className}`);
+        .append('rect')
+        .attr('x', legendX + legendPadding)
+        .attr('y', (d, i) => legendY + legendPadding + i * (legendSquareSize + legendSquareSpacing))
+        .attr('width', legendSquareSize)
+        .attr('height', legendSquareSize)
+        .attr('class', d => `legend ${d.className}`);
 
-    svg.selectAll("legendLabels")
+    svg.selectAll('legendLabels')
         .data(series)
         .enter()
-        .append("text")
-        .attr("x", legendX + legendPadding + legendSquareSize + legendTextSpacing)
-        .attr("y", (d, i) => legendY + legendPadding + i * (legendSquareSize + legendSquareSpacing) + (legendSquareSize / 2))
-        .attr("class", d => `legend ${d.className}`)
+        .append('text')
+        .attr('x', legendX + legendPadding + legendSquareSize + legendTextSpacing)
+        .attr('y', (d, i) => legendY + legendPadding + i * (legendSquareSize + legendSquareSpacing) + (legendSquareSize / 2))
+        .attr('class', d => `legend ${d.className}`)
         .text(d => d.title);
 
     // axes
@@ -137,5 +148,8 @@ window.addEventListener('DOMContentLoaded', () => {
             .ticks(d3.timeMonth.every(3))
         );
     svg.append('g')
-        .call(d3.axisLeft(y));
+        .call(d3.axisLeft(y1));
+    svg.append('g')
+        .attr('transform', `translate(${innerWidth}, 0)`)
+        .call(d3.axisRight(y2));
 });

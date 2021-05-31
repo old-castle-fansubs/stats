@@ -41,7 +41,7 @@
             <div class='row justify-content-center'>
               <div class='col-xl-8 col-12'>
                 <div class='daily-stats'>
-                  <p class='float-right small mt-3 mb-0'>
+                  <p class='float-right small mt-3 mb-0 mr-4'>
                     Total page views: {{ daily_traffic_stats|sum(attribute='requests') }} {# -#}
                     Total downloads: {{ torrents|sum(attribute='download_count') }}
                   </p>
