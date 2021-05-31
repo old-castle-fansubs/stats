@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 import dateutil.parser
 import requests
+from cachetools.func import ttl_cache
 
 CLOUDFLARE_ZONE = os.environ["CLOUDFLARE_ZONE"]
 CLOUDFLARE_API_USER = os.environ["CLOUDFLARE_API_USER"]
@@ -20,6 +21,7 @@ class TrafficStat:
     unique_visitors: int
 
 
+@ttl_cache
 def get_recent_hits() -> T.Dict[datetime.date, TrafficStat]:
     logging.info("cloudflare: fetching hit stats")
 

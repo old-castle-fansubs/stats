@@ -7,6 +7,7 @@ from datetime import datetime
 import humanfriendly
 import lxml.html
 import requests
+from cachetools.func import ttl_cache
 
 ANIDEX_USER = os.environ["ANIDEX_USER"]
 ANIDEX_PASS = os.environ["ANIDEX_PASS"]
@@ -38,6 +39,7 @@ def bypass_ddos_guard(session: requests.Session) -> None:
         session.cookies.set_cookie(requests.cookies.create_cookie(key, value))
 
 
+@ttl_cache
 def get_group_torrents() -> T.Iterable[Torrent]:
     logging.info("anidex: fetching torrent list")
     session = requests.Session()

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import humanfriendly
 import lxml.html
 import requests
+from cachetools.func import ttl_cache
 
 from oc_stats.common import CACHE_DIR
 
@@ -40,6 +41,7 @@ class Comment:
     text: str
 
 
+@ttl_cache
 def get_user_torrents() -> T.Iterable[Torrent]:
     logging.info("nyaa.si: fetching torrent list")
     session = requests.Session()
