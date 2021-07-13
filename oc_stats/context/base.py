@@ -1,14 +1,15 @@
 import json
 import typing as T
+from pathlib import Path
 
 from oc_stats.common import DATA_DIR, json_default
 
 
 class BaseContextBuilder:
-    context_key = NotImplemented
+    context_key: str = NotImplemented
 
     @property
-    def db_path(self) -> str:
+    def db_path(self) -> Path:
         return DATA_DIR / f"{self.context_key}.json"
 
     @staticmethod
@@ -20,7 +21,7 @@ class BaseContextBuilder:
         return json.dumps(value, default=json_default, indent=4)
 
     @staticmethod
-    def transform_context(value: T.Optional[str]) -> T.Any:
+    def transform_context(value: T.Any) -> T.Any:
         return value
 
     def update(self, original_value: T.Any) -> T.Any:

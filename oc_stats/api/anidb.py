@@ -1,9 +1,9 @@
-import datetime
 import logging
 import os
 import time
 import typing as T
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -23,8 +23,8 @@ class AniDBInfo:
     type: str
     episodes: int
     synopsis: str
-    start_date: T.Optional[datetime.date]
-    end_date: T.Optional[datetime.date]
+    start_date: T.Optional[date]
+    end_date: T.Optional[date]
 
 
 class XmlParser:
@@ -41,14 +41,14 @@ def process_synopsis(synopsis: str) -> str:
     return synopsis.replace("http", " http")
 
 
-def process_date(text: str) -> T.Optional[datetime.date]:
+def process_date(text: str) -> T.Optional[date]:
     try:
         return dateutil.parser.parse(text).date()
     except ValueError:
         return None
 
 
-def get_anidb_info(anime_id: int) -> AniDBInfo:
+def get_anidb_info(anime_id: int) -> T.Optional[AniDBInfo]:
     entry_cache_path = CACHE_DIR / "anidb" / f"{anime_id}.xml"
     image_cache_path = CACHE_DIR / "anidb" / f"{anime_id}.jpg"
 

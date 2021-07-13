@@ -17,7 +17,7 @@ class AnimeRequestDTO:
     date: T.Optional[datetime]
     title: str
     link: str
-    anidb_id: int
+    anidb_id: T.Optional[int]
     comment: T.Optional[str]
     synopsis: T.Optional[str]
     type: T.Optional[str]
@@ -43,7 +43,7 @@ class AnimeRequestsContextBuilder(BaseContextBuilder):
         return [
             AnimeRequestDTO(
                 date=(
-                    dateutil.parser.parse(item_date).date()
+                    dateutil.parser.parse(item_date)
                     if (item_date := item.pop("date"))
                     else None
                 ),
@@ -57,7 +57,10 @@ class AnimeRequestsContextBuilder(BaseContextBuilder):
 
         ret = []
         for request in requests:
-            anidb_info = get_anidb_info(request.anidb_id)
+            if request.anidb_id:
+                anidb_info = get_anidb_info(request.anidb_id)
+            else:
+                anidb_info = None
 
             ret.append(
                 AnimeRequestDTO(

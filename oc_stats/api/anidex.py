@@ -39,7 +39,7 @@ def bypass_ddos_guard(session: requests.Session) -> None:
         session.cookies.set_cookie(requests.cookies.create_cookie(key, value))
 
 
-@ttl_cache
+@ttl_cache()
 def get_group_torrents() -> T.Iterable[Torrent]:
     logging.info("anidex: fetching torrent list")
     session = requests.Session()
@@ -52,7 +52,7 @@ def get_group_torrents() -> T.Iterable[Torrent]:
     )
     response.raise_for_status()
 
-    ret: T.List[Torrent] = []
+    ret: list[Torrent] = []
     offset = 0
     while True:
         response = session.get(

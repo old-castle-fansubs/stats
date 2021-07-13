@@ -37,21 +37,21 @@ class CommentsContextBuilder(BaseContextBuilder):
         ]
 
     def update(self, original_value: T.Any) -> T.Any:
-        ret = []
+        ret: list[CommentDTO] = []
 
         guestbook_comments = get_guestbook_comments()
-        for comment in guestbook_comments:
-            ret.append(
-                CommentDTO(
-                    source="guestbook",
-                    website_title=None,
-                    website_link=comment.website_link,
-                    comment_date=comment.comment_date,
-                    author_name=comment.author_name,
-                    author_avatar_url=comment.author_avatar_url,
-                    text=comment.text,
-                )
+        ret.extend(
+            CommentDTO(
+                source="guestbook",
+                website_title=None,
+                website_link=comment.website_link,
+                comment_date=comment.comment_date,
+                author_name=comment.author_name,
+                author_avatar_url=comment.author_avatar_url,
+                text=comment.text,
             )
+            for comment in guestbook_comments
+        )
 
         nyaa_si_torrents = list(nyaa_si.get_user_torrents())
         nyaa_si_comments = list(
@@ -64,18 +64,18 @@ class CommentsContextBuilder(BaseContextBuilder):
             )
         )
 
-        for comment in nyaa_si_comments:
-            ret.append(
-                CommentDTO(
-                    source="nyaa.si",
-                    website_title=comment.website_title,
-                    website_link=comment.website_link,
-                    comment_date=comment.comment_date,
-                    author_name=comment.author_name,
-                    author_avatar_url=comment.author_avatar_url,
-                    text=comment.text,
-                )
+        ret.extend(
+            CommentDTO(
+                source="nyaa.si",
+                website_title=comment.website_title,
+                website_link=comment.website_link,
+                comment_date=comment.comment_date,
+                author_name=comment.author_name,
+                author_avatar_url=comment.author_avatar_url,
+                text=comment.text,
             )
+            for comment in nyaa_si_comments
+        )
 
         ret.sort(key=lambda comment: comment.comment_date, reverse=True)
 

@@ -8,7 +8,7 @@ MISSING = object()
 
 class ContextBuilderRepository:
     def __init__(self) -> None:
-        self.data = {}
+        self.data: dict[T.Any, T.Any] = {}
         self.builders = [cls() for cls in BaseContextBuilder.__subclasses__()]
 
     def load_data(self) -> None:
@@ -35,7 +35,7 @@ class ContextBuilderRepository:
                 builder.db_path.parent.mkdir(parents=True, exist_ok=True)
                 builder.db_path.write_text(builder.serialize(value))
 
-    def build_context(self) -> T.Dict:
+    def build_context(self) -> dict[str, T.Any]:
         return {
             builder.context_key: builder.transform_context(
                 self.data.get(builder.context_key)

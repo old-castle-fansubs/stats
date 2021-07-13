@@ -1,8 +1,7 @@
-import datetime
 import logging
 import os
-import typing as T
 from dataclasses import dataclass
+from datetime import date, datetime, timedelta
 
 import dateutil.parser
 import requests
@@ -21,12 +20,12 @@ class TrafficStat:
     unique_visitors: int
 
 
-@ttl_cache
-def get_recent_hits() -> T.Dict[datetime.date, TrafficStat]:
+@ttl_cache()
+def get_recent_hits() -> dict[date, TrafficStat]:
     logging.info("cloudflare: fetching hit stats")
 
-    start = datetime.datetime.today().date() - datetime.timedelta(days=10)
-    end = datetime.datetime.today().date() + datetime.timedelta(days=1)
+    start = datetime.today().date() - timedelta(days=10)
+    end = datetime.today().date() + timedelta(days=1)
 
     query = """{
     viewer {
@@ -65,7 +64,7 @@ def get_recent_hits() -> T.Dict[datetime.date, TrafficStat]:
     )
     response.raise_for_status()
 
-    ret: T.Dict[datetime.date, TrafficStat] = {}
+    ret: dict[date, TrafficStat] = {}
     for item in response.json()["data"]["viewer"]["zones"][0][
         "httpRequests1dGroups"
     ]:

@@ -40,8 +40,8 @@ def sanitize(text: str) -> str:
     )
 
     def set_links(
-        attrs: T.Dict[T.Tuple[T.Optional[str], str], str], new: bool = False
-    ) -> T.Dict[T.Tuple[T.Optional[str], str], str]:
+        attrs: dict[tuple[T.Optional[str], str], str], new: bool = False
+    ) -> dict[tuple[T.Optional[str], str], str]:
         href_key = (None, "href")
 
         if href_key not in attrs:
@@ -69,4 +69,4 @@ def render_markdown(text: str) -> str:
     if not (ret.startswith("<p>") or ret.endswith("</p>")):
         ret = "<p>" + ret + "</p>"
     ret = sanitize(ret)
-    return T.cast(str, ret)
+    return ret

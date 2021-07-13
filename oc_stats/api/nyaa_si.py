@@ -41,7 +41,7 @@ class Comment:
     text: str
 
 
-@ttl_cache
+@ttl_cache()
 def get_user_torrents() -> T.Iterable[Torrent]:
     logging.info("nyaa.si: fetching torrent list")
     session = requests.Session()
@@ -65,7 +65,7 @@ def get_user_torrents() -> T.Iterable[Torrent]:
     except Exception as ex:
         logging.exception(ex)
 
-    ret: T.List[Torrent] = []
+    ret: list[Torrent] = []
     page = 1
     page_count = float("inf")
     while page <= page_count:
@@ -106,7 +106,7 @@ def get_torrent_comments(torrent: Torrent) -> T.Iterable[Comment]:
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         cache_path.write_text(content)
 
-    ret: T.List[Comment] = []
+    ret: list[Comment] = []
     tree = lxml.html.fromstring(content)
     for row in tree.xpath(
         '//div[@id="comments"]//div[starts-with(@id, "com-")]'

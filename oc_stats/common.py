@@ -21,14 +21,14 @@ def json_default(obj: T.Any) -> T.Any:
 
 
 def convert_to_diffs(
-    items: T.Dict[datetime.date, T.Union[int, float]]
-) -> T.Dict[datetime.date, T.Union[int, float]]:
-    ret = {}
+    items: dict[date, T.Union[int, float]]
+) -> dict[date, T.Union[int, float]]:
+    ret: dict[date, T.Union[int, float]] = {}
     if not items:
         return ret
     prev_key = list(items.keys())[0]
     prev_value = None
-    for key, value in sorted(items.items(), key = lambda kv: kv[0]):
+    for key, value in sorted(items.items(), key=lambda kv: kv[0]):
         if prev_value is not None:
             if abs((key - prev_key).days) <= 1:
                 ret[key] = value - prev_value

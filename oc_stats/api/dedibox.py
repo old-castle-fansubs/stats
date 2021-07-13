@@ -24,23 +24,25 @@ class Comment:
 
 @dataclass
 class TransmissionStats:
-    raw_data: T.Dict[str, T.Any]
+    raw_data: dict[str, T.Any]
 
     @property
     def torrent_count(self) -> int:
-        return self.raw_data["torrentCount"]
+        return T.cast(int, self.raw_data["torrentCount"])
 
     @property
     def active_torrent_count(self) -> int:
-        return self.raw_data["activeTorrentCount"]
+        return T.cast(int, self.raw_data["activeTorrentCount"])
 
     @property
     def downloaded_bytes(self) -> int:
-        return self.raw_data["cumulative-stats"]["downloadedBytes"]
+        return T.cast(
+            int, self.raw_data["cumulative-stats"]["downloadedBytes"]
+        )
 
     @property
     def uploaded_bytes(self) -> int:
-        return self.raw_data["cumulative-stats"]["uploadedBytes"]
+        return T.cast(int, self.raw_data["cumulative-stats"]["uploadedBytes"])
 
     @property
     def uptime(self) -> timedelta:

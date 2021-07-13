@@ -1,6 +1,6 @@
-import datetime
 import json
 import typing as T
+from datetime import datetime
 
 import jinja2
 
@@ -19,7 +19,7 @@ def percent(
 def setup_jinja_env(jinja_env: jinja2.Environment) -> None:
     jinja_env.lstrip_blocks = True
     jinja_env.trim_blocks = True
-    jinja_env.globals["deployment_id"] = datetime.datetime.now().isoformat()
+    jinja_env.globals["deployment_id"] = datetime.now().isoformat()
     jinja_env.filters["markdown"] = render_markdown
     jinja_env.filters["tojson"] = lambda obj: json.dumps(
         obj, default=json_default
