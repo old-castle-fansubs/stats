@@ -4,7 +4,7 @@
       <div class='card-body bg-light'>
         <a href='{{ request.link }}'>
           {% if request.picture -%}
-            <img src='{{ request.picture }}' alt='{{ request.title }}'/>
+            <img class='lazy' data-src='{{ request.picture }}' alt='{{ request.title }}'/>
           {%- else -%}
             <img src='img/unknown.jpg' alt='Unknown image'/>
           {%- endif %}

@@ -106,5 +106,6 @@
     rawData.nyaaSiDownloads = {{ daily_nyaa_si_stats|tojson|safe }} || [];
   </script>
   <script src='{{ url_for('static', filename='report-daily-stats.js') }}'></script>
+  <script src='{{ url_for('static', filename='lazy-images.js') }}'></script>
 </body>
 </html>

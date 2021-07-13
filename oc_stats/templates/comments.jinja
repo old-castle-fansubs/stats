@@ -2,8 +2,8 @@
   <li class='border bg-light'>
     {% if comment.author_avatar_url -%}
       <img {#-
-        #} class='avatar border' {#-
-        #} src='{{ comment.author_avatar_url }}' {#-
+        #} class='lazy avatar border' {#-
+        #} data-src='{{ comment.author_avatar_url }}' {#-
         #} alt='{{ comment.author_name }}' {#-
       -#} />
     {%- else -%}
