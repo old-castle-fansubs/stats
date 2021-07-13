@@ -65,9 +65,8 @@ def sanitize(text: str) -> str:
 
 @functools.cache
 def render_markdown(text: str) -> str:
-    ret = markdown.markdown(text)
+    ret = markdown.markdown(text).rstrip("\n")
     if not (ret.startswith("<p>") or ret.endswith("</p>")):
         ret = "<p>" + ret + "</p>"
     ret = sanitize(ret)
-
     return T.cast(str, ret)
