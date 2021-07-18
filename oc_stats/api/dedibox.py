@@ -111,13 +111,13 @@ def get_transmission_stats() -> TransmissionStats:
 def get_guestbook_comments() -> T.Iterable[Comment]:
     logging.info("dedibox: fetching guestbook comments")
     content = subprocess.run(
-        ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/comments.json"],
+        ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/comments.jsonl"],
         check=True,
         stdout=subprocess.PIPE,
     ).stdout.decode()
 
-    items = json.loads(content)
-    for item in items:
+    for row in content.splitlines():
+        item = json.loads(row)
         chksum = hashlib.md5(
             (item["email"] or item["author"]).encode()
         ).hexdigest()
@@ -136,13 +136,13 @@ def get_guestbook_comments() -> T.Iterable[Comment]:
 def get_anime_requests() -> T.Iterable[AnimeRequest]:
     logging.info("dedibox: fetching anime requests")
     content = subprocess.run(
-        ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/requests.json"],
+        ["ssh", DEDIBOX_HOST, "cat", "srv/website/data/requests.jsonl"],
         check=True,
         stdout=subprocess.PIPE,
     ).stdout.decode()
 
-    items = json.loads(content)
-    for item in items:
+    for row in content.splitlines():
+        item = json.loads(row)
         yield AnimeRequest(
             date=dateutil.parser.parse(item["date"]) if item["date"] else None,
             title=item["title"],
